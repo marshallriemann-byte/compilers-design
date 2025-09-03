@@ -19,3 +19,14 @@ class NFA:
         self.transition_function = transition_function
         self.start_state = start_state
         self.accept_states = accept_states
+
+    def epsilon_closure(self, states: set[str]) -> set[str]:
+        out = set(states)
+        queue = deque(out)
+        while queue:
+            cur = queue.popleft()
+            for s in self.transition_function[cur][EMPTY_STRING]:
+                if s not in out:
+                    out.add(s)
+                    queue.append(s)
+        out
