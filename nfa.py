@@ -1,8 +1,34 @@
 # Nondeterministic finite automaton
 
 from collections import deque
+from dataclasses import dataclass
 
-EMPTY_STRING = ''
+
+class EmptyString:
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super().__new__(cls)
+        cls._instance
+
+
+class AnySymbol:
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super().__new__(cls)
+        cls._instance
+
+
+@dataclass
+class Symbol:
+    char: str
+
+
+AlphabetSymbol = EmptyString | AnySymbol | Symbol
+EMPTY_STRING = EmptyString()
 
 
 class NFA:
@@ -10,7 +36,7 @@ class NFA:
         self,
         states: set[str],
         alphabet: set[str],
-        transition_function: dict[str, dict[str, set[str]]],
+        transition_function: dict[str, dict[AlphabetSymbol, set[str]]],
         start_state: str,
         accept_states: set[str]
     ):
