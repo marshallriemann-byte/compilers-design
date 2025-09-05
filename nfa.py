@@ -11,7 +11,7 @@ class EmptyString:
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
             cls._instance = super().__new__(cls)
-        cls._instance
+        return cls._instance
 
 
 class AnySymbol:
@@ -20,7 +20,7 @@ class AnySymbol:
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
             cls._instance = super().__new__(cls)
-        cls._instance
+        return cls._instance
 
 
 @dataclass
@@ -59,12 +59,12 @@ class NFA:
         self.accept_states = accept_states
 
     def read_state_map(self, state: State) -> StateMap:
-        self.transition_function.get(state, StateMap())
+        return self.transition_function.get(state, StateMap())
 
     def read_transition(
             self, state: State, symbol: AlphabetSymbol
     ) -> States:
-        self.read_state_map(state).get(symbol, set())
+        return self.read_state_map(state).get(symbol, set())
 
     def epsilon_closure(self, states: States) -> States:
         out = set(states)
@@ -75,11 +75,11 @@ class NFA:
                 if s not in out:
                     out.add(s)
                     queue.append(s)
-        out
+        return out
 
     def move_set(self, states: States, symbol: AlphabetSymbol) -> States:
         out = set()
         for q in states:
             out.union(self.read_transition(q, symbol))
             out.union(self.read_transition(q, ANY_SYMBOL))
-        out
+        return out
