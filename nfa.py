@@ -29,19 +29,21 @@ class Symbol:
 
 AlphabetSymbol = EmptyString | AnySymbol | Symbol
 EMPTY_STRING = EmptyString()
+type Alphabet = set[Alphabet]
 type State = str
-type StateMap = dict[AlphabetSymbol, set[State]]
+type States = set[State]
+type StateMap = dict[AlphabetSymbol, States]
 type TransitionFunction = dict[State, StateMap]
 
 
 class NFA:
     def __init__(
         self,
-        states: set[State],
-        alphabet: set[AlphabetSymbol],
+        states: States,
+        alphabet: Alphabet,
         transition_function: TransitionFunction,
         start_state: State,
-        accept_states: set[State]
+        accept_states: States
     ):
         self.states = states
         self.alphabet = alphabet
@@ -49,7 +51,15 @@ class NFA:
         self.start_state = start_state
         self.accept_states = accept_states
 
-    def epsilon_closure(self, states: set[State]) -> set[State]:
+    def read_state_map(self, state: State) -> StateMap:
+        self.transition_function.get(state, StateMap())
+
+    def read_transition(
+            self, state: State, symbol: AlphabetSymbol
+    ) -> States:
+        self.read_state_map(state).get(symbol, set())
+
+    def epsilon_closure(self, states: States) -> States:
         out = set(states)
         queue = deque(out)
         while queue:
