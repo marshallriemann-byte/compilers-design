@@ -62,9 +62,9 @@ class NFA:
         return self.transition_function.get(state, StateMap())
 
     def read_transition(
-            self, state: State, symbol: AlphabetSymbol
+        self, state: State, symbol: AlphabetSymbol
     ) -> States:
-        return self.read_state_map(state).get(symbol, set())
+        return self.read_state_map(state).get(symbol, States())
 
     def epsilon_closure(self, states: States) -> States:
         out = set(states)
@@ -80,6 +80,6 @@ class NFA:
     def move_set(self, states: States, symbol: AlphabetSymbol) -> States:
         out = set()
         for q in states:
-            out.union(self.read_transition(q, symbol))
-            out.union(self.read_transition(q, ANY_SYMBOL))
+            out.update(self.read_transition(q, symbol))
+            out.update(self.read_transition(q, ANY_SYMBOL))
         return out
