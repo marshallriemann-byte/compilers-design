@@ -29,6 +29,7 @@ class Symbol:
 
 AlphabetSymbol = EmptyString | AnySymbol | Symbol
 EMPTY_STRING = EmptyString()
+ANY_SYMBOL = AnySymbol()
 type Alphabet = set[Alphabet]
 type State = str
 type States = set[State]
@@ -64,7 +65,7 @@ class NFA:
         queue = deque(out)
         while queue:
             cur = queue.popleft()
-            for s in self.transition_function[cur][EMPTY_STRING]:
+            for s in self.read_transition(cur, EMPTY_STRING):
                 if s not in out:
                     out.add(s)
                     queue.append(s)
