@@ -1,5 +1,6 @@
 # Nondeterministic finite automaton
 
+from enum import Enum
 from collections import deque
 from dataclasses import dataclass
 
@@ -35,6 +36,11 @@ type State = str
 type States = set[State]
 type StateMap = dict[AlphabetSymbol, States]
 type TransitionFunction = dict[State, StateMap]
+
+
+class ComputationResult(Enum):
+    ACCEPT = 0
+    REJECT = 1
 
 
 class NFA:
