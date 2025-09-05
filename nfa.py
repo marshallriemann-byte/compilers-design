@@ -30,6 +30,8 @@ class Symbol:
 AlphabetSymbol = EmptyString | AnySymbol | Symbol
 EMPTY_STRING = EmptyString()
 type State = str
+type StateMap = dict[AlphabetSymbol, set[State]]
+type TransitionFunction = dict[State, StateMap]
 
 
 class NFA:
@@ -37,7 +39,7 @@ class NFA:
         self,
         states: set[State],
         alphabet: set[AlphabetSymbol],
-        transition_function: dict[State, dict[AlphabetSymbol, set[State]]],
+        transition_function: TransitionFunction,
         start_state: State,
         accept_states: set[State]
     ):
