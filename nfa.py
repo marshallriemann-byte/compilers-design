@@ -29,16 +29,17 @@ class Symbol:
 
 AlphabetSymbol = EmptyString | AnySymbol | Symbol
 EMPTY_STRING = EmptyString()
+type State = str
 
 
 class NFA:
     def __init__(
         self,
-        states: set[str],
-        alphabet: set[str],
-        transition_function: dict[str, dict[AlphabetSymbol, set[str]]],
-        start_state: str,
-        accept_states: set[str]
+        states: set[State],
+        alphabet: set[AlphabetSymbol],
+        transition_function: dict[State, dict[AlphabetSymbol, set[State]]],
+        start_state: State,
+        accept_states: set[State]
     ):
         self.states = states
         self.alphabet = alphabet
@@ -46,7 +47,7 @@ class NFA:
         self.start_state = start_state
         self.accept_states = accept_states
 
-    def epsilon_closure(self, states: set[str]) -> set[str]:
+    def epsilon_closure(self, states: set[State]) -> set[State]:
         out = set(states)
         queue = deque(out)
         while queue:
