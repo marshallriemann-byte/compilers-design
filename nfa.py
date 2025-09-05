@@ -69,3 +69,10 @@ class NFA:
                     out.add(s)
                     queue.append(s)
         out
+
+    def move_set(self, states: States, symbol: AlphabetSymbol) -> States:
+        out = set()
+        for q in states:
+            out.union(self.read_transition(q, symbol))
+            out.union(self.read_transition(q, ANY_SYMBOL))
+        out
