@@ -4,6 +4,7 @@ from enum import Enum
 from collections import deque
 from dataclasses import dataclass
 from collections.abc import Iterable
+from uuid import uuid4
 
 
 class TransitionSymbol:
@@ -71,10 +72,10 @@ class NFA:
 
     def read_transition(
         self, state: State, symbol: TransitionSymbol
-    ) -> States:
+    ) -> set[State]:
         return self.read_state_map(state).get(symbol, set())
 
-    def epsilon_closure(self, states: States) -> States:
+    def epsilon_closure(self, states: States) -> set[State]:
         out = set(states)
         queue = deque(out)
         while queue:
@@ -85,7 +86,7 @@ class NFA:
                     queue.append(s)
         return out
 
-    def move_set(self, states: States, symbol: TransitionSymbol) -> States:
+    def move_set(self, states: States, symbol: TransitionSymbol) -> set[State]:
         out = set()
         for q in states:
             out.update(self.read_transition(q, symbol))
@@ -102,6 +103,83 @@ class NFA:
         if nfa_states.intersection(self.accept_states):
             return ComputationResult.ACCEPT
         return ComputationResult.REJECT
+
+    def compute_equivalent_DFA(self):
+        names: dict[frozenset[State], State] = {}
+
+        def create_name(state: frozenset[State]) -> State:
+            state_name = names.get(state, None)
+            if state_name is None:
+                state_name = '{' + ','.join(state) + '}'
+                names[state] = state_name
+            return state_name
+
+        dfa_start_state = frozenset(self.epsilon_closure({self.start_state}))
+        create_name(dfa_start_state)
+
+        dfa_alphabet = self.alphabet
+        try:
+            dfa_alphabet.remove(EMPTY_STRING)
+        except KeyError:
+            pass
+        try:
+            dfa_alphabet.remove(ANY_SYMBOL)
+        except KeyError:
+            pass
+
+        sink_state = frozenset({uuid4().hex})
+        create_name(sink_state)
+        used_sink_state = False
+
+        dfa_transition_function = dict()
+
+        def add_transition(
+            state: frozenset[State],
+            symbol: Symbol,
+            output: frozenset[State]
+        ):
+            state_name = create_name(state)
+            state_transitions = dfa_transition_function.get(state_name, None)
+            if state_transitions is None:
+                dfa_transition_function[state_name] = dict()
+                state_transitions = dfa_transition_function[state_name]
+            symbol_transitions = state_transitions.get(symbol, None)
+            if symbol_transitions is None:
+                state_transitions[symbol] = set()
+                symbol_transitions = state_transitions[symbol]
+            symbol_transitions.add(create_name(output))
+
+        dfa_accept_states: set[States] = set()
+        if dfa_start_state.intersection(self.accept_states):
+            dfa_accept_states.add(create_name(dfa_start_state))
+
+        queue = deque([dfa_start_state])
+        while queue:
+            current = queue.popleft()
+            for symbol in dfa_alphabet:
+                new_dfa_state = self.move_set(current, symbol)
+                new_dfa_state = frozenset(self.epsilon_closure(new_dfa_state))
+                if not new_dfa_state:
+                    used_sink_state = True
+                    add_transition(current, symbol, sink_state)
+                elif new_dfa_state not in names:
+                    new_state_name = create_name(new_dfa_state)
+                    if new_dfa_state.intersection(self.accept_states):
+                        dfa_accept_states.add(new_state_name)
+                    queue.append(new_dfa_state)
+                    add_transition(current, symbol, new_dfa_state)
+
+        if used_sink_state:
+            add_transition(sink_state, ANY_SYMBOL, sink_state)
+            dfa_alphabet.add(ANY_SYMBOL)
+
+        return NFA(
+            states=set(names.values()),
+            alphabet=dfa_alphabet,
+            transition_function=dfa_transition_function,
+            start_state=create_name(dfa_start_state),
+            accept_states=dfa_accept_states
+        )
 
     def enumerate_language(self):
         queue = deque([''])
