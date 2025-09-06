@@ -5,7 +5,15 @@ from collections import deque
 from dataclasses import dataclass
 
 
-class EmptyString:
+class TransitionSymbol:
+    def __eq__(self, other):
+        return type(self) is type(other)
+
+    def __hash__(self):
+        return hash(type(self))
+
+
+class EmptyString(TransitionSymbol):
     _instance = None
 
     def __new__(cls, *args, **kwargs):
@@ -14,7 +22,7 @@ class EmptyString:
         return cls._instance
 
 
-class AnySymbol:
+class AnySymbol(TransitionSymbol):
     _instance = None
 
     def __new__(cls, *args, **kwargs):
@@ -23,18 +31,17 @@ class AnySymbol:
         return cls._instance
 
 
-@dataclass
-class Symbol:
+@dataclass(frozen=True)
+class Symbol(TransitionSymbol):
     char: str
 
 
-AlphabetSymbol = EmptyString | AnySymbol | Symbol
 EMPTY_STRING = EmptyString()
 ANY_SYMBOL = AnySymbol()
 type Alphabet = set[Alphabet]
 type State = str
 type States = set[State]
-type StateMap = dict[AlphabetSymbol, States]
+type StateMap = dict[TransitionSymbol, States]
 type TransitionFunction = dict[State, StateMap]
 
 
@@ -62,7 +69,7 @@ class NFA:
         return self.transition_function.get(state, StateMap())
 
     def read_transition(
-        self, state: State, symbol: AlphabetSymbol
+        self, state: State, symbol: TransitionSymbol
     ) -> States:
         return self.read_state_map(state).get(symbol, States())
 
@@ -77,7 +84,7 @@ class NFA:
                     queue.append(s)
         return out
 
-    def move_set(self, states: States, symbol: AlphabetSymbol) -> States:
+    def move_set(self, states: States, symbol: TransitionSymbol) -> States:
         out = set()
         for q in states:
             out.update(self.read_transition(q, symbol))
