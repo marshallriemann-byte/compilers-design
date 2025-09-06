@@ -233,5 +233,51 @@ if __name__ == '__main__':
         accept_states={'s1'}
     )
 
-    used = N6
-    print(used.compute('abbaaaaa'))
+    N7 = NFA(
+        # Accepts (ab)*
+        states={'0', '1', '2', '3'},
+        alphabet={Symbol('a'), Symbol('b')},
+        transition_function={
+            '0': {
+                Symbol('a'): {'1'},
+                Symbol('b'): {'4'},
+            },
+            '1': {
+                Symbol('a'): {'3'},
+                Symbol('b'): {'2'},
+            },
+            '2': {
+                Symbol('a'): {'1'},
+                Symbol('b'): {'3'},
+            },
+            '3': {
+                ANY_SYMBOL: {'3'}
+            }
+        },
+        start_state='0',
+        accept_states={'2'}
+    )
+
+    N8 = NFA(
+        # Accepts a*b*
+        states={'0', '1', '2'},
+        alphabet={Symbol('a'), Symbol('b')},
+        transition_function={
+            '0': {
+                Symbol('a'): {'0'},
+                Symbol('b'): {'1'},
+            },
+            '1': {
+                Symbol('a'): {'2'},
+                Symbol('b'): {'1'},
+            },
+            '2': {
+                ANY_SYMBOL: {'3'}
+            }
+        },
+        start_state='0',
+        accept_states={'0', '1'}
+    )
+
+    used = N8
+    print(used.compute('bbbb'))
