@@ -369,6 +369,48 @@ if __name__ == '__main__':
         accept_states={'0', '1'}
     )
 
-    used = N1
-    # print(used.compute('bbbb'))
-    used.enumerate_language()
+    N9 = NFA(
+        # Accepts a|b
+        states={'0', '1', '2', '3', '4'},
+        alphabet={Symbol('a'), Symbol('b')},
+        transition_function={
+            '0': {
+                EMPTY_STRING: {'1', '2'}
+            },
+            '1': {
+                Symbol('a'): {'3'},
+            },
+            '2': {
+                Symbol('b'): {'4'}
+            }
+        },
+        start_state='0',
+        accept_states={'3', '4'}
+    )
+
+    N10 = NFA(
+        # DFA of N9
+        states={'0', '1', '2', '3'},
+        alphabet={Symbol('a'), Symbol('b')},
+        transition_function={
+            '0': {
+                Symbol('a'): {'1'},
+                Symbol('b'): {'2'},
+            },
+            '1': {
+                ANY_SYMBOL: {'3'}
+            },
+            '2': {
+                ANY_SYMBOL: {'3'}
+            },
+            '3': {
+                ANY_SYMBOL: {'3'}
+            }
+        },
+        start_state='0',
+        accept_states={'1', '2'}
+    )
+
+    used = N9.compute_equivalent_DFA()
+    print(used.compute('ba'))
+    # used.enumerate_language()
