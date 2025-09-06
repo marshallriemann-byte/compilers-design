@@ -66,12 +66,12 @@ class NFA:
         self.accept_states = accept_states
 
     def read_state_map(self, state: State) -> StateMap:
-        return self.transition_function.get(state, StateMap())
+        return self.transition_function.get(state, dict())
 
     def read_transition(
         self, state: State, symbol: TransitionSymbol
     ) -> States:
-        return self.read_state_map(state).get(symbol, States())
+        return self.read_state_map(state).get(symbol, set())
 
     def epsilon_closure(self, states: States) -> States:
         out = set(states)
