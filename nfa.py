@@ -102,6 +102,17 @@ class NFA:
             return ComputationResult.ACCEPT
         return ComputationResult.REJECT
 
+    def enumerate_language(self):
+        queue = deque([''])
+        while True:
+            cur = queue.popleft()
+            if self.compute(cur) == ComputationResult.ACCEPT:
+                print(cur)
+            for symbol in self.alphabet:
+                match symbol:
+                    case Symbol(c):
+                        queue.append(cur + c)
+
 
 if __name__ == '__main__':
     N1 = NFA(
@@ -279,5 +290,6 @@ if __name__ == '__main__':
         accept_states={'0', '1'}
     )
 
-    used = N8
-    print(used.compute('bbbb'))
+    used = N1
+    # print(used.compute('bbbb'))
+    used.enumerate_language()
