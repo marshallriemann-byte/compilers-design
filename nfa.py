@@ -3,6 +3,7 @@
 from enum import Enum
 from collections import deque
 from dataclasses import dataclass
+from collections.abc import Iterable
 
 
 class TransitionSymbol:
@@ -40,7 +41,7 @@ EMPTY_STRING = EmptyString()
 ANY_SYMBOL = AnySymbol()
 type Alphabet = set[Alphabet]
 type State = str
-type States = set[State]
+type States = Iterable[State]
 type StateMap = dict[TransitionSymbol, States]
 type TransitionFunction = dict[State, StateMap]
 
