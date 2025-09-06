@@ -90,3 +90,14 @@ class NFA:
             out.update(self.read_transition(q, symbol))
             out.update(self.read_transition(q, ANY_SYMBOL))
         return out
+
+    def compute(self, input: str) -> ComputationResult:
+        nfa_states = self.epsilon_closure({self.start_state})
+        for c in input:
+            nfa_states = self.move_set(nfa_states, Symbol(c))
+            if not nfa_states:
+                return ComputationResult.REJECT
+            nfa_states = self.epsilon_closure(nfa_states)
+        if nfa_states.intersection(self.accept_states):
+            return ComputationResult.ACCEPT
+        return ComputationResult.REJECT
