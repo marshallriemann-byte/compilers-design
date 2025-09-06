@@ -101,3 +101,137 @@ class NFA:
         if nfa_states.intersection(self.accept_states):
             return ComputationResult.ACCEPT
         return ComputationResult.REJECT
+
+
+if __name__ == '__main__':
+    N1 = NFA(
+        # Accept strings with even number of a's
+        states={'even', 'odd'},
+        alphabet={Symbol('a'), Symbol('b')},
+        transition_function={
+            'even': {
+                Symbol('a'): {'odd'},
+                Symbol('b'): {'even'},
+            },
+            'odd': {
+                Symbol('a'): {'even'},
+                Symbol('b'): {'odd'},
+            },
+        },
+        start_state='even',
+        accept_states={'even'}
+    )
+
+    N2 = NFA(
+        # Accept strings with only a's and no b's
+        states={'A', 'B'},
+        alphabet={Symbol('a'), Symbol('b')},
+        transition_function={
+            'A': {
+                Symbol('a'): {'A'},
+                Symbol('b'): {'B'},
+            },
+            'B': {
+                ANY_SYMBOL: {'B'},
+            }
+        },
+        start_state='A',
+        accept_states={'A'}
+    )
+
+    N3 = NFA(
+        # Accept (a|b)*ab
+        states={'0', '1', '2'},
+        alphabet={Symbol('a'), Symbol('b')},
+        transition_function={
+            '0': {
+                Symbol('a'): {'0', '1'},
+                Symbol('b'): {'0'},
+            },
+            '1': {
+                Symbol('b'): {'2'}
+            }
+        },
+        start_state='0',
+        accept_states={'2'}
+    )
+
+    N4 = NFA(
+        # Accept (a|b)*ab, DFA of N3
+        states={'0', '1', '2'},
+        alphabet={Symbol('a'), Symbol('b')},
+        transition_function={
+            '0': {
+                Symbol('a'): {'1'},
+                Symbol('b'): {'0'},
+            },
+            '1': {
+                Symbol('a'): {'1'},
+                Symbol('b'): {'2'},
+            },
+            '2': {
+                Symbol('a'): {'1'},
+                Symbol('b'): {'0'},
+            }
+        },
+        start_state='0',
+        accept_states={'2'}
+    )
+
+    N5 = NFA(
+        states={'0', '1', '2', '3', '4', '5', '6', '7', '8'},
+        alphabet={Symbol('a'), Symbol('b')},
+        transition_function={
+            '0': {
+                EMPTY_STRING: {'1', '7'},
+            },
+            '1': {
+                EMPTY_STRING: {'2', '4'},
+            },
+            '2': {
+                Symbol('a'): {'3'},
+            },
+            '3': {
+                EMPTY_STRING: {'6'},
+            },
+            '4': {
+                Symbol('b'): {'5'},
+            },
+            '5': {
+                EMPTY_STRING: {'6'},
+            },
+            '6': {
+                EMPTY_STRING: {'1', '7'},
+            },
+            '7': {
+                Symbol('a'): {'8'}
+            }
+        },
+        start_state='0',
+        accept_states={'8'}
+    )
+
+    N6 = NFA(
+        # Accepts abb*a(a|bb*a)*, DFA of N5
+        states={'s0', 's1', 's2'},
+        alphabet={Symbol('a'), Symbol('b')},
+        transition_function={
+            's0': {
+                Symbol('a'): {'s1'},
+                Symbol('b'): {'s2'},
+            },
+            's1': {
+                Symbol('a'): {'s1'},
+                Symbol('b'): {'s2'},
+            },
+            's2': {
+                Symbol('a'): {'s1'},
+                Symbol('b'): {'s2'},
+            }
+        },
+        start_state='s0',
+        accept_states={'s1'}
+    )
+
+    used = N6
+    print(used.compute('abbaaaaa'))
