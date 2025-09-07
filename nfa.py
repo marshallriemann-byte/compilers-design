@@ -5,6 +5,8 @@ from collections import deque
 from dataclasses import dataclass
 from collections.abc import Iterable
 from uuid import uuid4
+from typing import Self
+from copy import deepcopy
 
 
 class TransitionSymbol:
@@ -104,8 +106,8 @@ class NFA:
             return ComputationResult.ACCEPT
         return ComputationResult.REJECT
 
-    def compute_equivalent_DFA(self):
-        names: dict[frozenset[State], State] = {}
+    def compute_equivalent_DFA(self) -> Self:
+        names: dict[frozenset[State], State] = dict()
 
         def create_name(state: frozenset[State]) -> State:
             state_name = names.get(state, None)
@@ -187,6 +189,24 @@ class NFA:
                 match symbol:
                     case Symbol(c):
                         queue.append(cur + c)
+
+    def kleene_star(nfa: Self) -> Self:
+        star_nfa = deepcopy(nfa)
+        for q in star_nfa.accept_states:
+            q_state_map = star_nfa.transition_function.get(q, None)
+            if not q_state_map:
+                star_nfa.transition_function[q] = dict()
+                q_state_map = star_nfa.transition_function[q]
+            try:
+                q_state_map[EMPTY_STRING].add(star_nfa.start_state)
+            except KeyError:
+                q_state_map[EMPTY_STRING] = {star_nfa.start_state}
+        star_nfa_start_state = uuid4().hex
+        star_nfa.accept_states.add(star_nfa_start_state)
+        star_nfa.transition_function[star_nfa_start_state] = \
+            {EMPTY_STRING: star_nfa.start_state}
+        star_nfa.start_state = star_nfa_start_state
+        return star_nfa
 
 
 if __name__ == '__main__':
@@ -456,6 +476,6 @@ if __name__ == '__main__':
         accept_states={'3'}
     )
 
-    used = N5.compute_equivalent_DFA()
-    print(used.compute('aaaaaabbbbbbbaaaaaaa'))
+    used = N9
+    print(NFA.kleene_star(used).compute(''))
     # used.enumerate_language()
