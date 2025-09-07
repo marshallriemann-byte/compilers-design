@@ -3,7 +3,7 @@
 from enum import Enum
 from collections import deque
 from dataclasses import dataclass
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from uuid import uuid4
 from typing import Self
 from copy import deepcopy
@@ -202,6 +202,51 @@ class NFA:
             {EMPTY_STRING: star_nfa.start_state}
         star_nfa.start_state = star_nfa_start_state
         return star_nfa
+
+    def concatenate(automata: Sequence[Self]) -> Self:
+        def rename_state(nfa_index, state_name):
+            return f'(NFA{nfa_index}, {state_name})'
+        states: set[States] = set()
+        alphabet: Alphabet = set()
+        transition_function: TransitionFunction = dict()
+        # Rename states
+        for (index, nfa) in enumerate(automata):
+            states.update({rename_state(index, q) for q in nfa.states})
+            alphabet.update(nfa.alphabet)
+            for (q, q_map) in nfa.transition_function.items():
+                transition_function[rename_state(index, q)] = {
+                    symbol: {
+                        rename_state(index, r) for r in symbol_map
+                    }
+                    for (symbol, symbol_map) in q_map.items()
+                }
+            if index+1 < len(automata):
+                for q in nfa.accept_states:
+                    q_name = rename_state(index, q)
+                    q_map = transition_function.get(q, None)
+                    if not q_map:
+                        transition_function[q_name] = dict()
+                        q_map = transition_function[q_name]
+                    next_nfa_start_state = rename_state(
+                        index+1,
+                        automata[index+1].start_state
+                    )
+                    try:
+                        q_map[EMPTY_STRING].update(next_nfa_start_state)
+                    except KeyError:
+                        q_map[EMPTY_STRING] = {next_nfa_start_state}
+        start_state = rename_state(0, automata[0].start_state)
+        accept_states = {
+            rename_state(len(automata)-1, q)
+            for q in automata[-1].accept_states
+        }
+        return NFA(
+            states,
+            alphabet,
+            transition_function,
+            start_state,
+            accept_states
+        )
 
 
 if __name__ == '__main__':
@@ -471,6 +516,6 @@ if __name__ == '__main__':
         accept_states={'3'}
     )
 
-    used = N9
-    print(NFA.kleene_star(used).compute(''))
+    used = NFA.concatenate([N10, N10])
+    print(used.enumerate_language())
     # used.enumerate_language()
