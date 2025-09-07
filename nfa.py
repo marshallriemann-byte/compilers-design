@@ -298,7 +298,7 @@ if __name__ == '__main__':
     )
 
     N6 = NFA(
-        # Accepts abb*a(a|bb*a)*, DFA of N5
+        # Accepts aa*|(b|aa*b)(b|aa*b)*aa*, DFA of N5
         states={'s0', 's1', 's2'},
         alphabet={Symbol('a'), Symbol('b')},
         transition_function={
@@ -407,6 +407,55 @@ if __name__ == '__main__':
         accept_states={'1', '2'}
     )
 
-    used = N9.compute_equivalent_DFA()
-    print(used.compute('ba'))
+    N11 = NFA(
+        # Accepts b*ab*a(a|bb*a)*bb*
+        states={'0', '1', '2', '3'},
+        alphabet={Symbol('a'), Symbol('b')},
+        transition_function={
+            '0': {
+                Symbol('a'): {'0', '1'},
+                Symbol('b'): {'0'},
+            },
+            '1': {
+                Symbol('a'): {'1', '2'},
+                Symbol('b'): {'1'},
+            },
+            '2': {
+                EMPTY_STRING: {'0'},
+                Symbol('a'): {'2'},
+                Symbol('b'): {'2', '3'},
+            },
+        },
+        start_state='0',
+        accept_states={'3'}
+    )
+
+    N12 = NFA(
+        # DFA of N11
+        states={'0', '1', '2', '3'},
+        alphabet={Symbol('a'), Symbol('b')},
+        transition_function={
+            '0': {
+                Symbol('a'): {'1'},
+                Symbol('b'): {'0'},
+            },
+            '1': {
+                Symbol('a'): {'2'},
+                Symbol('b'): {'1'},
+            },
+            '2': {
+                Symbol('a'): {'2'},
+                Symbol('b'): {'3'},
+            },
+            '3': {
+                Symbol('a'): {'2'},
+                Symbol('b'): {'3'},
+            }
+        },
+        start_state='0',
+        accept_states={'3'}
+    )
+
+    used = N5.compute_equivalent_DFA()
+    print(used.compute('aaaaaabbbbbbbaaaaaaa'))
     # used.enumerate_language()
