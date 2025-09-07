@@ -110,7 +110,7 @@ class NFA:
         def create_name(state: frozenset[State]) -> State:
             state_name = names.get(state, None)
             if state_name is None:
-                state_name = '{' + ','.join(state) + '}'
+                state_name = '{' + ', '.join(state) + '}'
                 names[state] = state_name
             return state_name
 
@@ -153,20 +153,22 @@ class NFA:
         if dfa_start_state.intersection(self.accept_states):
             dfa_accept_states.add(create_name(dfa_start_state))
 
-        queue = deque([dfa_start_state])
+        queue = {dfa_start_state}
         while queue:
-            current = queue.popleft()
+            current = queue.pop()
             for symbol in dfa_alphabet:
                 new_dfa_state = self.move_set(current, symbol)
                 new_dfa_state = frozenset(self.epsilon_closure(new_dfa_state))
                 if not new_dfa_state:
                     used_sink_state = True
                     add_transition(current, symbol, sink_state)
-                elif new_dfa_state not in names:
-                    new_state_name = create_name(new_dfa_state)
+                else:
+                    new_dfa_state_name = create_name(new_dfa_state)
                     if new_dfa_state.intersection(self.accept_states):
-                        dfa_accept_states.add(new_state_name)
-                    queue.append(new_dfa_state)
+                        dfa_accept_states.add(new_dfa_state_name)
+                    if new_dfa_state != current and \
+                            new_dfa_state_name not in dfa_transition_function:
+                        queue.add(new_dfa_state)
                     add_transition(current, symbol, new_dfa_state)
 
         if used_sink_state:
