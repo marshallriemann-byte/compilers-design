@@ -115,7 +115,6 @@ class NFA:
             return state_name
 
         dfa_start_state = frozenset(self.epsilon_closure({self.start_state}))
-        create_name(dfa_start_state)
 
         dfa_alphabet = self.alphabet
         try:
@@ -128,7 +127,6 @@ class NFA:
             pass
 
         sink_state = frozenset({uuid4().hex})
-        create_name(sink_state)
         used_sink_state = False
 
         dfa_transition_function = dict()
@@ -150,12 +148,12 @@ class NFA:
             symbol_transitions.add(create_name(output))
 
         dfa_accept_states: set[States] = set()
-        if dfa_start_state.intersection(self.accept_states):
-            dfa_accept_states.add(create_name(dfa_start_state))
 
         queue = {dfa_start_state}
         while queue:
             current = queue.pop()
+            if current.intersection(self.accept_states):
+                dfa_accept_states.add(create_name(current))
             for symbol in dfa_alphabet:
                 new_dfa_state = self.move_set(current, symbol)
                 new_dfa_state = frozenset(self.epsilon_closure(new_dfa_state))
@@ -163,13 +161,9 @@ class NFA:
                     used_sink_state = True
                     add_transition(current, symbol, sink_state)
                 else:
-                    new_dfa_state_name = create_name(new_dfa_state)
-                    if new_dfa_state.intersection(self.accept_states):
-                        dfa_accept_states.add(new_dfa_state_name)
-                    if new_dfa_state != current and \
-                            new_dfa_state_name not in dfa_transition_function:
-                        queue.add(new_dfa_state)
                     add_transition(current, symbol, new_dfa_state)
+                    if create_name(new_dfa_state) not in dfa_transition_function:
+                        queue.add(new_dfa_state)
 
         if used_sink_state:
             add_transition(sink_state, ANY_SYMBOL, sink_state)
