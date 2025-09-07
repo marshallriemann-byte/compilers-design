@@ -123,10 +123,6 @@ class NFA:
             dfa_alphabet.remove(EMPTY_STRING)
         except KeyError:
             pass
-        try:
-            dfa_alphabet.remove(ANY_SYMBOL)
-        except KeyError:
-            pass
 
         sink_state = frozenset({uuid4().hex})
         used_sink_state = False
@@ -135,7 +131,7 @@ class NFA:
 
         def add_transition(
             state: frozenset[State],
-            symbol: Symbol,
+            symbol: TransitionSymbol,
             output: frozenset[State]
         ):
             state_name = create_name(state)
@@ -169,7 +165,6 @@ class NFA:
 
         if used_sink_state:
             add_transition(sink_state, ANY_SYMBOL, sink_state)
-            dfa_alphabet.add(ANY_SYMBOL)
 
         return NFA(
             states=set(names.values()),
