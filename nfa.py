@@ -186,7 +186,10 @@ class NFA:
                         queue.append(cur + c)
 
     def kleene_star(nfa: Self) -> Self:
+        star_nfa_start_state = uuid4().hex
         star_nfa = deepcopy(nfa)
+        star_nfa.states.add(star_nfa_start_state)
+        star_nfa.accept_states.add(star_nfa_start_state)
         for q in star_nfa.accept_states:
             q_state_map = star_nfa.transition_function.get(q, None)
             if not q_state_map:
@@ -196,10 +199,6 @@ class NFA:
                 q_state_map[EMPTY_STRING].add(star_nfa.start_state)
             except KeyError:
                 q_state_map[EMPTY_STRING] = {star_nfa.start_state}
-        star_nfa_start_state = uuid4().hex
-        star_nfa.accept_states.add(star_nfa_start_state)
-        star_nfa.transition_function[star_nfa_start_state] = \
-            {EMPTY_STRING: star_nfa.start_state}
         star_nfa.start_state = star_nfa_start_state
         return star_nfa
 
