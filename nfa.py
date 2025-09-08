@@ -66,8 +66,15 @@ class NFA:
         self.states = states
         self.alphabet = alphabet
         self.transition_function = transition_function
+        for (q, q_map) in self.transition_function:
+            self.states.add(q)
+            for (symbol, symbol_set) in q_map.items():
+                self.alphabet.add(symbol)
+                self.states.update(symbol_set)
         self.start_state = start_state
+        self.states.add(self.start_state)
         self.accept_states = accept_states
+        self.states.update(self.accept_states)
 
     def read_state_map(self, state: State) -> StateMap:
         return self.transition_function.get(state, dict())
@@ -119,10 +126,6 @@ class NFA:
         dfa_start_state = frozenset(self.epsilon_closure({self.start_state}))
 
         dfa_alphabet = self.alphabet
-        try:
-            dfa_alphabet.remove(EMPTY_STRING)
-        except KeyError:
-            pass
 
         sink_state = frozenset({uuid4().hex})
         used_sink_state = False
