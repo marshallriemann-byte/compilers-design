@@ -208,7 +208,6 @@ class NFA:
         states: set[States] = set()
         alphabet: Alphabet = set()
         transition_function: TransitionFunction = dict()
-        # Rename states
         for (index, nfa) in enumerate(automata):
             states.update({rename_state(index, q) for q in nfa.states})
             alphabet.update(nfa.alphabet)
@@ -220,18 +219,18 @@ class NFA:
                     for (symbol, symbol_map) in q_map.items()
                 }
             if index+1 < len(automata):
+                next_nfa_start_state = rename_state(
+                    index+1,
+                    automata[index+1].start_state
+                )
                 for q in nfa.accept_states:
                     q_name = rename_state(index, q)
-                    q_map = transition_function.get(q, None)
+                    q_map = transition_function.get(q_name, None)
                     if not q_map:
                         transition_function[q_name] = dict()
                         q_map = transition_function[q_name]
-                    next_nfa_start_state = rename_state(
-                        index+1,
-                        automata[index+1].start_state
-                    )
                     try:
-                        q_map[EMPTY_STRING].update(next_nfa_start_state)
+                        q_map[EMPTY_STRING].add(next_nfa_start_state)
                     except KeyError:
                         q_map[EMPTY_STRING] = {next_nfa_start_state}
         start_state = rename_state(0, automata[0].start_state)
