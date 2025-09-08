@@ -71,6 +71,14 @@ class NFA:
             for (symbol, symbol_set) in q_map.items():
                 self.alphabet.add(symbol)
                 self.states.update(symbol_set)
+        try:
+            self.alphabet.remove(ANY_SYMBOL)
+        except KeyError:
+            pass
+        try:
+            self.alphabet.remove(EMPTY_STRING)
+        except KeyError:
+            pass
         self.start_state = start_state
         self.states.add(self.start_state)
         self.accept_states = accept_states
