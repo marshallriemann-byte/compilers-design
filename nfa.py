@@ -246,6 +246,15 @@ class NFA:
             accept_states
         )
 
+    def __mul__(self, other: Self) -> Self:
+        return NFA.concatenate([self, other])
+
+    def __or__(self, other: Self) -> Self:
+        return NFA.union([self, other])
+
+    def __invert__(self) -> Self:
+        return NFA.kleene_star(self)
+
 
 if __name__ == '__main__':
     N1 = NFA(
