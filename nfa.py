@@ -257,6 +257,45 @@ class NFA:
             accept_states
         )
 
+    def union(automata: Sequence[Self]) -> Self:
+        def rename_state(nfa_index, state_name):
+            return f'(NFA{nfa_index}, {state_name})'
+        states: set[States] = set()
+        alphabet: Alphabet = set()
+        transition_function: TransitionFunction = dict()
+        start_state = f'(UNION-{uuid4().hex})'
+        transition_function[start_state] = {
+            EMPTY_STRING: set()
+        }
+        start_state_set: set[State] =\
+            transition_function[start_state][EMPTY_STRING]
+        accept_states: set[States] = set()
+        # Rename states
+        for (index, nfa) in enumerate(automata):
+            states.update({rename_state(index, q) for q in nfa.states})
+            alphabet.update(nfa.alphabet)
+            for (q, q_map) in nfa.transition_function.items():
+                transition_function[rename_state(index, q)] = {
+                    symbol: {
+                        rename_state(index, r) for r in symbol_map
+                    }
+                    for (symbol, symbol_map) in q_map.items()
+                }
+            start_state_set.add(
+                rename_state(index, nfa.start_state)
+            )
+            accept_states.update({
+                rename_state(index, q)
+                for q in nfa.accept_states
+            })
+        return NFA(
+            states,
+            alphabet,
+            transition_function,
+            start_state,
+            accept_states
+        )
+
     def __mul__(self, other: Self) -> Self:
         return NFA.concatenate([self, other])
 
@@ -404,7 +443,7 @@ if __name__ == '__main__':
         transition_function={
             '0': {
                 Symbol('a'): {'1'},
-                Symbol('b'): {'4'},
+                Symbol('b'): {'3'},
             },
             '1': {
                 Symbol('a'): {'3'},
@@ -436,7 +475,7 @@ if __name__ == '__main__':
                 Symbol('b'): {'1'},
             },
             '2': {
-                ANY_SYMBOL: {'3'}
+                ANY_SYMBOL: {'2'}
             }
         },
         start_state='0',
@@ -534,6 +573,25 @@ if __name__ == '__main__':
         accept_states={'3'}
     )
 
-    used = NFA.concatenate([N10, N10])
-    print(used.enumerate_language())
-    # used.enumerate_language()
+    N13 = NFA(
+        # Accept a single 'a'
+        states={'0', '1', '2'},
+        alphabet={Symbol('a'), Symbol('b')},
+        transition_function={
+            '0': {
+                Symbol('a'): {'1'},
+                Symbol('b'): {'2'},
+            },
+            '1': {
+                ANY_SYMBOL: {'2'}
+            },
+            '2': {
+                ANY_SYMBOL: {'2'}
+            },
+        },
+        start_state='0',
+        accept_states={'1'}
+    )
+
+    used = N9 | ~(N13 * N13)
+    print(used.compute('bb'))
