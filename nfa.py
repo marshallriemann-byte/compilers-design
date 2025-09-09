@@ -318,7 +318,7 @@ class NFA:
                         self.move_set({q}, symbol)
                     )
                 new_items = []
-                for Y in partitions:
+                for Y in partitions.copy():
                     S = frozenset(X.intersection(Y))
                     R = frozenset(Y - X)
                     if S and R:
@@ -340,7 +340,11 @@ class NFA:
             Y_name = create_name(Y)
             states.add(Y_name)
             transition_function[Y_name] = {
-                symbol: {create_name(self.move_set(Y, symbol))}
+                symbol: {
+                    create_name(
+                        frozenset(self.move_set(Y, symbol))
+                    )
+                }
                 for symbol in alphabet
             }
             if self.start_state in Y:
