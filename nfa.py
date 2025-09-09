@@ -294,6 +294,67 @@ class NFA:
             accept_states
         )
 
+    def compute_minimized_DFA(self):
+        names: dict[frozenset[State], State] = dict()
+
+        def create_name(state: frozenset[State]) -> State:
+            state_name = names.get(state, None)
+            if state_name is None:
+                state_name = '{' + ', '.join(state) + '}'
+                names[state] = state_name
+            return state_name
+
+        partitions = {
+            frozenset(self.accept_states),
+            frozenset(self.states - self.accept_states),
+        }
+        queue = deque(partitions)
+        while queue:
+            current = queue.popleft()
+            for symbol in self.alphabet:
+                X = set()
+                for q in current:
+                    X.update(
+                        self.move_set({q}, symbol)
+                    )
+                new_items = []
+                for Y in partitions:
+                    S = frozenset(X.intersection(Y))
+                    R = frozenset(Y - X)
+                    if S and R:
+                        partitions.remove(Y)
+                        new_items.extend([S, R])
+                        if Y in queue:
+                            queue.extend([S, R])
+                        elif len(S) < len(R):
+                            queue.append(S)
+                        else:
+                            queue.append(R)
+                partitions.update(new_items)
+        states: States = set()
+        alphabet = self.alphabet
+        transition_function: TransitionFunction = dict()
+        start_state = ''
+        accept_states: States = set()
+        for Y in partitions:
+            Y_name = create_name(Y)
+            states.add(Y_name)
+            transition_function[Y_name] = {
+                symbol: {create_name(self.move_set(Y, symbol))}
+                for symbol in alphabet
+            }
+            if self.start_state in Y:
+                start_state = Y_name
+            if Y.intersection(self.accept_states):
+                accept_states.add(Y_name)
+        return NFA(
+            states,
+            alphabet,
+            transition_function,
+            start_state,
+            accept_states
+        )
+
     def __mul__(self, other: Self) -> Self:
         return NFA.concatenate([self, other])
 
