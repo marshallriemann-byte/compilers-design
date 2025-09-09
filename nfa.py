@@ -66,7 +66,7 @@ class NFA:
         self.states = states
         self.alphabet = alphabet
         self.transition_function = transition_function
-        for (q, q_map) in self.transition_function:
+        for (q, q_map) in self.transition_function.items():
             self.states.add(q)
             for (symbol, symbol_set) in q_map.items():
                 self.alphabet.add(symbol)
@@ -158,9 +158,9 @@ class NFA:
 
         dfa_accept_states: States = set()
 
-        queue = {dfa_start_state}
+        queue = deque([dfa_start_state])
         while queue:
-            current = queue.pop()
+            current = queue.popleft()
             if current.intersection(self.accept_states):
                 dfa_accept_states.add(create_name(current))
             for symbol in dfa_alphabet:
@@ -172,7 +172,7 @@ class NFA:
                 else:
                     add_transition(current, symbol, new_dfa_state)
                     if create_name(new_dfa_state) not in dfa_transition_function:
-                        queue.add(new_dfa_state)
+                        queue.append(new_dfa_state)
 
         if used_sink_state:
             add_transition(sink_state, ANY_SYMBOL, sink_state)
