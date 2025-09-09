@@ -3,7 +3,7 @@
 from enum import Enum
 from collections import deque
 from dataclasses import dataclass
-from collections.abc import Iterable, Sequence
+from collections.abc import Sequence
 from uuid import uuid4
 from typing import Self
 from copy import deepcopy
@@ -42,9 +42,9 @@ class Symbol(TransitionSymbol):
 
 EMPTY_STRING = EmptyString()
 ANY_SYMBOL = AnySymbol()
-type Alphabet = set[Alphabet]
+type Alphabet = set[Symbol]
 type State = str
-type States = Iterable[State]
+type States = set[State]
 type StateMap = dict[TransitionSymbol, States]
 type TransitionFunction = dict[State, StateMap]
 
@@ -89,10 +89,10 @@ class NFA:
 
     def read_transition(
         self, state: State, symbol: TransitionSymbol
-    ) -> set[State]:
+    ) -> States:
         return self.read_state_map(state).get(symbol, set())
 
-    def epsilon_closure(self, states: States) -> set[State]:
+    def epsilon_closure(self, states: States) -> States:
         out = set(states)
         queue = deque(out)
         while queue:
@@ -103,7 +103,7 @@ class NFA:
                     queue.append(s)
         return out
 
-    def move_set(self, states: States, symbol: TransitionSymbol) -> set[State]:
+    def move_set(self, states: States, symbol: TransitionSymbol) -> States:
         out = set()
         for q in states:
             out.update(self.read_transition(q, symbol))
@@ -156,7 +156,7 @@ class NFA:
                 symbol_transitions = state_transitions[symbol]
             symbol_transitions.add(create_name(output))
 
-        dfa_accept_states: set[States] = set()
+        dfa_accept_states: States = set()
 
         queue = {dfa_start_state}
         while queue:
@@ -192,12 +192,10 @@ class NFA:
             if self.compute(cur) == ComputationResult.ACCEPT:
                 print(cur)
             for symbol in self.alphabet:
-                match symbol:
-                    case Symbol(c):
-                        queue.append(cur + c)
+                queue.append(cur + symbol.char)
 
     def kleene_star(nfa: Self) -> Self:
-        star_nfa_start_state = uuid4().hex
+        star_nfa_start_state = f'(STAR, {uuid4().hex})'
         star_nfa = deepcopy(nfa)
         star_nfa.states.add(star_nfa_start_state)
         star_nfa.accept_states.add(star_nfa_start_state)
@@ -216,7 +214,7 @@ class NFA:
     def concatenate(automata: Sequence[Self]) -> Self:
         def rename_state(nfa_index, state_name):
             return f'(NFA{nfa_index}, {state_name})'
-        states: set[States] = set()
+        states: States = set()
         alphabet: Alphabet = set()
         transition_function: TransitionFunction = dict()
         for (index, nfa) in enumerate(automata):
@@ -260,16 +258,16 @@ class NFA:
     def union(automata: Sequence[Self]) -> Self:
         def rename_state(nfa_index, state_name):
             return f'(NFA{nfa_index}, {state_name})'
-        states: set[States] = set()
+        states: States = set()
         alphabet: Alphabet = set()
         transition_function: TransitionFunction = dict()
-        start_state = f'(UNION-{uuid4().hex})'
+        start_state = f'(UNION, {uuid4().hex})'
         transition_function[start_state] = {
             EMPTY_STRING: set()
         }
-        start_state_set: set[State] =\
+        start_state_set: States =\
             transition_function[start_state][EMPTY_STRING]
-        accept_states: set[States] = set()
+        accept_states: States = set()
         # Rename states
         for (index, nfa) in enumerate(automata):
             states.update({rename_state(index, q) for q in nfa.states})
