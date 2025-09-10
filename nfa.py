@@ -2,7 +2,6 @@
 
 from enum import Enum
 from collections import deque
-from dataclasses import dataclass
 from collections.abc import Sequence
 from uuid import uuid4
 from typing import Self
@@ -15,6 +14,7 @@ type State = str
 type States = set[State]
 type StateMap = dict[Symbol, States]
 type TransitionFunction = dict[State, StateMap]
+
 
 EMPTY_STRING = ''
 
@@ -86,17 +86,16 @@ class NFA:
         names: dict[frozenset[State], State] = dict()
 
         def create_name(state: frozenset[State]) -> State:
-            state_name = names.get(state, None)
-            if state_name is None:
-                state_name = '{' + ', '.join(state) + '}'
-                names[state] = state_name
-            return state_name
+            return names.setdefault(
+                state,
+                '{' + ', '.join(state) + '}'
+            )
 
         dfa_start_state = frozenset(self.epsilon_closure({self.start_state}))
 
         dfa_alphabet = self.alphabet
 
-        sink_state = frozenset({uuid4().hex})
+        sink_state = frozenset({f'(SINK, {uuid4().hex})'})
         used_sink_state = False
 
         dfa_transition_function = dict()
@@ -106,16 +105,11 @@ class NFA:
             symbol: Symbol,
             output: frozenset[State]
         ):
-            state_name = create_name(state)
-            state_transitions = dfa_transition_function.get(state_name, None)
-            if state_transitions is None:
-                dfa_transition_function[state_name] = dict()
-                state_transitions = dfa_transition_function[state_name]
-            symbol_transitions = state_transitions.get(symbol, None)
-            if symbol_transitions is None:
-                state_transitions[symbol] = set()
-                symbol_transitions = state_transitions[symbol]
-            symbol_transitions.add(create_name(output))
+            dfa_transition_function.setdefault(
+                create_name(state), dict()
+            ).setdefault(
+                symbol, set()
+            ).update(output)
 
         dfa_accept_states: States = set()
 
@@ -132,7 +126,8 @@ class NFA:
                     add_transition(current, symbol, sink_state)
                 else:
                     add_transition(current, symbol, new_dfa_state)
-                    if create_name(new_dfa_state) not in dfa_transition_function:
+                    new_name = create_name(new_dfa_state)
+                    if new_name not in dfa_transition_function:
                         queue.append(new_dfa_state)
 
         if used_sink_state:
@@ -164,14 +159,11 @@ class NFA:
         star_nfa.states.add(star_nfa_start_state)
         star_nfa.accept_states.add(star_nfa_start_state)
         for q in star_nfa.accept_states:
-            q_state_map = star_nfa.transition_function.get(q, None)
-            if not q_state_map:
-                star_nfa.transition_function[q] = dict()
-                q_state_map = star_nfa.transition_function[q]
-            try:
-                q_state_map[EMPTY_STRING].add(star_nfa.start_state)
-            except KeyError:
-                q_state_map[EMPTY_STRING] = {star_nfa.start_state}
+            star_nfa.transition_function.setdefault(
+                q, dict()
+            ).setdefault(
+                EMPTY_STRING, set()
+            ).add(star_nfa.start_state)
         star_nfa.start_state = star_nfa_start_state
         return star_nfa
 
@@ -197,15 +189,11 @@ class NFA:
                     automata[index+1].start_state
                 )
                 for q in nfa.accept_states:
-                    q_name = rename_state(index, q)
-                    q_map = transition_function.get(q_name, None)
-                    if not q_map:
-                        transition_function[q_name] = dict()
-                        q_map = transition_function[q_name]
-                    try:
-                        q_map[EMPTY_STRING].add(next_nfa_start_state)
-                    except KeyError:
-                        q_map[EMPTY_STRING] = {next_nfa_start_state}
+                    transition_function.setdefault(
+                        rename_state(index, q), dict()
+                    ).setdefault(
+                        EMPTY_STRING, set()
+                    ).add(next_nfa_start_state)
         start_state = rename_state(0, automata[0].start_state)
         accept_states = {
             rename_state(len(automata)-1, q)
