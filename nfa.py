@@ -9,44 +9,14 @@ from typing import Self
 from copy import deepcopy
 
 
-class TransitionSymbol:
-    def __eq__(self, other):
-        return type(self) is type(other)
-
-    def __hash__(self):
-        return hash(type(self))
-
-
-class EmptyString(TransitionSymbol):
-    _instance = None
-
-    def __new__(cls, *args, **kwargs):
-        if not cls._instance:
-            cls._instance = super().__new__(cls)
-        return cls._instance
-
-
-class AnySymbol(TransitionSymbol):
-    _instance = None
-
-    def __new__(cls, *args, **kwargs):
-        if not cls._instance:
-            cls._instance = super().__new__(cls)
-        return cls._instance
-
-
-@dataclass(frozen=True)
-class Symbol(TransitionSymbol):
-    char: str
-
-
-EMPTY_STRING = EmptyString()
-ANY_SYMBOL = AnySymbol()
+type Symbol = str
 type Alphabet = set[Symbol]
 type State = str
 type States = set[State]
-type StateMap = dict[TransitionSymbol, States]
+type StateMap = dict[Symbol, States]
 type TransitionFunction = dict[State, StateMap]
+
+EMPTY_STRING = ''
 
 
 class ComputationResult(Enum):
@@ -71,14 +41,6 @@ class NFA:
             for (symbol, symbol_set) in q_map.items():
                 self.alphabet.add(symbol)
                 self.states.update(symbol_set)
-        try:
-            self.alphabet.remove(ANY_SYMBOL)
-        except KeyError:
-            pass
-        try:
-            self.alphabet.remove(EMPTY_STRING)
-        except KeyError:
-            pass
         self.start_state = start_state
         self.states.add(self.start_state)
         self.accept_states = accept_states
@@ -88,7 +50,7 @@ class NFA:
         return self.transition_function.get(state, dict())
 
     def read_transition(
-        self, state: State, symbol: TransitionSymbol
+        self, state: State, symbol: Symbol
     ) -> States:
         return self.read_state_map(state).get(symbol, set())
 
@@ -103,17 +65,16 @@ class NFA:
                     queue.append(s)
         return out
 
-    def move_set(self, states: States, symbol: TransitionSymbol) -> States:
+    def move_set(self, states: States, symbol: Symbol) -> States:
         out = set()
         for q in states:
             out.update(self.read_transition(q, symbol))
-            out.update(self.read_transition(q, ANY_SYMBOL))
         return out
 
     def compute(self, input: str) -> ComputationResult:
         nfa_states = self.epsilon_closure({self.start_state})
         for c in input:
-            nfa_states = self.move_set(nfa_states, Symbol(c))
+            nfa_states = self.move_set(nfa_states, c)
             if not nfa_states:
                 return ComputationResult.REJECT
             nfa_states = self.epsilon_closure(nfa_states)
@@ -142,7 +103,7 @@ class NFA:
 
         def add_transition(
             state: frozenset[State],
-            symbol: TransitionSymbol,
+            symbol: Symbol,
             output: frozenset[State]
         ):
             state_name = create_name(state)
@@ -175,7 +136,10 @@ class NFA:
                         queue.append(new_dfa_state)
 
         if used_sink_state:
-            add_transition(sink_state, ANY_SYMBOL, sink_state)
+            dfa_transition_function[create_name(sink_state)] = {
+                symbol: {create_name(sink_state)}
+                for symbol in dfa_alphabet
+            }
 
         return NFA(
             states=set(names.values()),
@@ -373,15 +337,15 @@ if __name__ == '__main__':
     N1 = NFA(
         # Accept strings with even number of a's
         states={'even', 'odd'},
-        alphabet={Symbol('a'), Symbol('b')},
+        alphabet={'a', 'b'},
         transition_function={
             'even': {
-                Symbol('a'): {'odd'},
-                Symbol('b'): {'even'},
+                'a': {'odd'},
+                'b': {'even'},
             },
             'odd': {
-                Symbol('a'): {'even'},
-                Symbol('b'): {'odd'},
+                'a': {'even'},
+                'b': {'odd'},
             },
         },
         start_state='even',
@@ -391,14 +355,15 @@ if __name__ == '__main__':
     N2 = NFA(
         # Accept strings with only a's and no b's
         states={'A', 'B'},
-        alphabet={Symbol('a'), Symbol('b')},
+        alphabet={'a', 'b'},
         transition_function={
             'A': {
-                Symbol('a'): {'A'},
-                Symbol('b'): {'B'},
+                'a': {'A'},
+                'b': {'B'},
             },
             'B': {
-                ANY_SYMBOL: {'B'},
+                'a': {'B'},
+                'b': {'B'},
             }
         },
         start_state='A',
@@ -408,14 +373,14 @@ if __name__ == '__main__':
     N3 = NFA(
         # Accept (a|b)*ab
         states={'0', '1', '2'},
-        alphabet={Symbol('a'), Symbol('b')},
+        alphabet={'a', 'b'},
         transition_function={
             '0': {
-                Symbol('a'): {'0', '1'},
-                Symbol('b'): {'0'},
+                'a': {'0', '1'},
+                'b': {'0'},
             },
             '1': {
-                Symbol('b'): {'2'}
+                'b': {'2'}
             }
         },
         start_state='0',
@@ -425,19 +390,19 @@ if __name__ == '__main__':
     N4 = NFA(
         # Accept (a|b)*ab, DFA of N3
         states={'0', '1', '2'},
-        alphabet={Symbol('a'), Symbol('b')},
+        alphabet={'a', 'b'},
         transition_function={
             '0': {
-                Symbol('a'): {'1'},
-                Symbol('b'): {'0'},
+                'a': {'1'},
+                'b': {'0'},
             },
             '1': {
-                Symbol('a'): {'1'},
-                Symbol('b'): {'2'},
+                'a': {'1'},
+                'b': {'2'},
             },
             '2': {
-                Symbol('a'): {'1'},
-                Symbol('b'): {'0'},
+                'a': {'1'},
+                'b': {'0'},
             }
         },
         start_state='0',
@@ -446,7 +411,7 @@ if __name__ == '__main__':
 
     N5 = NFA(
         states={'0', '1', '2', '3', '4', '5', '6', '7', '8'},
-        alphabet={Symbol('a'), Symbol('b')},
+        alphabet={'a', 'b'},
         transition_function={
             '0': {
                 EMPTY_STRING: {'1', '7'},
@@ -455,13 +420,13 @@ if __name__ == '__main__':
                 EMPTY_STRING: {'2', '4'},
             },
             '2': {
-                Symbol('a'): {'3'},
+                'a': {'3'},
             },
             '3': {
                 EMPTY_STRING: {'6'},
             },
             '4': {
-                Symbol('b'): {'5'},
+                'b': {'5'},
             },
             '5': {
                 EMPTY_STRING: {'6'},
@@ -470,7 +435,7 @@ if __name__ == '__main__':
                 EMPTY_STRING: {'1', '7'},
             },
             '7': {
-                Symbol('a'): {'8'}
+                'a': {'8'}
             }
         },
         start_state='0',
@@ -480,19 +445,19 @@ if __name__ == '__main__':
     N6 = NFA(
         # Accepts aa*|(b|aa*b)(b|aa*b)*aa*, DFA of N5
         states={'s0', 's1', 's2'},
-        alphabet={Symbol('a'), Symbol('b')},
+        alphabet={'a', 'b'},
         transition_function={
             's0': {
-                Symbol('a'): {'s1'},
-                Symbol('b'): {'s2'},
+                'a': {'s1'},
+                'b': {'s2'},
             },
             's1': {
-                Symbol('a'): {'s1'},
-                Symbol('b'): {'s2'},
+                'a': {'s1'},
+                'b': {'s2'},
             },
             's2': {
-                Symbol('a'): {'s1'},
-                Symbol('b'): {'s2'},
+                'a': {'s1'},
+                'b': {'s2'},
             }
         },
         start_state='s0',
@@ -502,22 +467,23 @@ if __name__ == '__main__':
     N7 = NFA(
         # Accepts (ab)*
         states={'0', '1', '2', '3'},
-        alphabet={Symbol('a'), Symbol('b')},
+        alphabet={'a', 'b'},
         transition_function={
             '0': {
-                Symbol('a'): {'1'},
-                Symbol('b'): {'3'},
+                'a': {'1'},
+                'b': {'3'},
             },
             '1': {
-                Symbol('a'): {'3'},
-                Symbol('b'): {'2'},
+                'a': {'3'},
+                'b': {'2'},
             },
             '2': {
-                Symbol('a'): {'1'},
-                Symbol('b'): {'3'},
+                'a': {'1'},
+                'b': {'3'},
             },
             '3': {
-                ANY_SYMBOL: {'3'}
+                'a': {'3'},
+                'b': {'3'}
             }
         },
         start_state='0',
@@ -527,18 +493,19 @@ if __name__ == '__main__':
     N8 = NFA(
         # Accepts a*b*
         states={'0', '1', '2'},
-        alphabet={Symbol('a'), Symbol('b')},
+        alphabet={'a', 'b'},
         transition_function={
             '0': {
-                Symbol('a'): {'0'},
-                Symbol('b'): {'1'},
+                'a': {'0'},
+                'b': {'1'},
             },
             '1': {
-                Symbol('a'): {'2'},
-                Symbol('b'): {'1'},
+                'a': {'2'},
+                'b': {'1'},
             },
             '2': {
-                ANY_SYMBOL: {'2'}
+                'a': {'2'},
+                'b': {'2'}
             }
         },
         start_state='0',
@@ -548,16 +515,16 @@ if __name__ == '__main__':
     N9 = NFA(
         # Accepts a|b
         states={'0', '1', '2', '3', '4'},
-        alphabet={Symbol('a'), Symbol('b')},
+        alphabet={'a', 'b'},
         transition_function={
             '0': {
                 EMPTY_STRING: {'1', '2'}
             },
             '1': {
-                Symbol('a'): {'3'},
+                'a': {'3'},
             },
             '2': {
-                Symbol('b'): {'4'}
+                'b': {'4'}
             }
         },
         start_state='0',
@@ -567,20 +534,23 @@ if __name__ == '__main__':
     N10 = NFA(
         # DFA of N9
         states={'0', '1', '2', '3'},
-        alphabet={Symbol('a'), Symbol('b')},
+        alphabet={'a', 'b'},
         transition_function={
             '0': {
-                Symbol('a'): {'1'},
-                Symbol('b'): {'2'},
+                'a': {'1'},
+                'b': {'2'},
             },
             '1': {
-                ANY_SYMBOL: {'3'}
+                'a': {'3'},
+                'b': {'3'}
             },
             '2': {
-                ANY_SYMBOL: {'3'}
+                'a': {'3'},
+                'b': {'3'}
             },
             '3': {
-                ANY_SYMBOL: {'3'}
+                'a': {'3'},
+                'b': {'3'}
             }
         },
         start_state='0',
@@ -590,20 +560,20 @@ if __name__ == '__main__':
     N11 = NFA(
         # Accepts b*ab*a(a|bb*a)*bb*
         states={'0', '1', '2', '3'},
-        alphabet={Symbol('a'), Symbol('b')},
+        alphabet={'a', 'b'},
         transition_function={
             '0': {
-                Symbol('a'): {'0', '1'},
-                Symbol('b'): {'0'},
+                'a': {'0', '1'},
+                'b': {'0'},
             },
             '1': {
-                Symbol('a'): {'1', '2'},
-                Symbol('b'): {'1'},
+                'a': {'1', '2'},
+                'b': {'1'},
             },
             '2': {
                 EMPTY_STRING: {'0'},
-                Symbol('a'): {'2'},
-                Symbol('b'): {'2', '3'},
+                'a': {'2'},
+                'b': {'2', '3'},
             },
         },
         start_state='0',
@@ -613,23 +583,23 @@ if __name__ == '__main__':
     N12 = NFA(
         # DFA of N11
         states={'0', '1', '2', '3'},
-        alphabet={Symbol('a'), Symbol('b')},
+        alphabet={'a', 'b'},
         transition_function={
             '0': {
-                Symbol('a'): {'1'},
-                Symbol('b'): {'0'},
+                'a': {'1'},
+                'b': {'0'},
             },
             '1': {
-                Symbol('a'): {'2'},
-                Symbol('b'): {'1'},
+                'a': {'2'},
+                'b': {'1'},
             },
             '2': {
-                Symbol('a'): {'2'},
-                Symbol('b'): {'3'},
+                'a': {'2'},
+                'b': {'3'},
             },
             '3': {
-                Symbol('a'): {'2'},
-                Symbol('b'): {'3'},
+                'a': {'2'},
+                'b': {'3'},
             }
         },
         start_state='0',
@@ -639,22 +609,50 @@ if __name__ == '__main__':
     N13 = NFA(
         # Accept a single 'a'
         states={'0', '1', '2'},
-        alphabet={Symbol('a'), Symbol('b')},
+        alphabet={'a', 'b'},
         transition_function={
             '0': {
-                Symbol('a'): {'1'},
-                Symbol('b'): {'2'},
+                'a': {'1'},
+                'b': {'2'},
             },
             '1': {
-                ANY_SYMBOL: {'2'}
+                'a': {'2'},
+                'b': {'2'},
             },
             '2': {
-                ANY_SYMBOL: {'2'}
+                'a': {'2'},
+                'b': {'2'},
             },
         },
         start_state='0',
         accept_states={'1'}
     )
 
-    used = N9 | ~(N13 * N13)
-    print(used.compute('bb'))
+    N14 = NFA(
+        states={'a', 'b', 'c', 'd', 'e', 'f'},
+        alphabet={'0', '1'},
+        transition_function={
+            'a': {
+                '0': {'b'},
+                '1': {'c'},
+            },
+            'b': {
+                '0': {'a'},
+                '1': {'d'},
+            },
+            'c': {
+                '0': {'e'},
+                '1': {'f'},
+            },
+            'd': {
+                '0': {'e'},
+                '1': {'f'},
+            },
+            'f': {
+                '0': {'f'},
+                '1': {'f'},
+            },
+        },
+        start_state='a',
+        accept_states={'c', 'e', 'e'},
+    )
