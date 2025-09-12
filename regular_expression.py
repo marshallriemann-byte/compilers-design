@@ -1,5 +1,8 @@
+from nfa import NFA
 from enum import Enum
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
+from typing import override
 
 
 class TokenType(Enum):
@@ -28,13 +31,34 @@ class Token:
 # Regular expressions abtract base class
 class RegeularExpression(ABC):
     @abstractmethod
-    def to_NFA(self):
+    def to_NFA(self) -> NFA:
         pass
 
     @abstractmethod
-    def __repr__(self):
+    def __repr__(self) -> str:
         pass
 
     @abstractmethod
-    def __str__(self):
+    def __str__(self) -> str:
         pass
+
+
+class Union(RegeularExpression):
+    def __init__(self, alternatives: Sequence[RegeularExpression]):
+        self.alternatives: list[RegeularExpression] = list(alternatives)
+
+    @override
+    def to_NFA(self) -> NFA:
+        return NFA.union([
+            re.to_NFA()
+            for re in self.alternatives
+        ])
+
+    @override
+    def __repr__(self) -> str:
+        value = '|'.join([repr(re) for re in self.alternatives])
+        return f'Union({value})'
+
+    @override
+    def __str__(self) -> str:
+        return '|'.join([str(re) for re in self.alternatives])
