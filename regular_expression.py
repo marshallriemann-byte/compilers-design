@@ -226,6 +226,11 @@ class RegularExpressionParser:
                 else:
                     print('Trailing slash at pattern end', file=stderr)
                     exit(1)
+            case c:  # any other character
+                self.current = Token(
+                    value=c,
+                    token_type=TokenType.SYBMOL,
+                )
         if self.current:
             self.current.pos = self.pos
             self.pos += len(self.current)
