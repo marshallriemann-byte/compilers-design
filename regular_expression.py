@@ -83,3 +83,20 @@ class Concatenation(RegeularExpression):
     @override
     def __str__(self) -> str:
         return ''.join([str(re) for re in self.sequence])
+
+
+class Star(RegeularExpression):
+    def __init__(self, expr: RegeularExpression):
+        self.expr: RegeularExpression = expr
+
+    @override
+    def to_NFA(self) -> NFA:
+        return NFA.kleene_star(self.expr.to_NFA())
+
+    @override
+    def __repr__(self) -> str:
+        return f'Star({repr(self.expr)})'
+
+    @override
+    def __str__(self) -> str:
+        return f'{str(self.expr)}*'
