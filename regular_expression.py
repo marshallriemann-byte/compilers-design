@@ -147,3 +147,20 @@ class Symbol(RegeularExpression):
     @override
     def __str__(self) -> str:
         return self.value
+
+
+class Group(RegeularExpression):
+    def __init__(self, grouped_expr: RegeularExpression):
+        self.grouped_expr: RegeularExpression = grouped_expr
+
+    @override
+    def to_NFA(self) -> NFA:
+        return self.grouped_expr.to_NFA()
+
+    @override
+    def __repr__(self) -> str:
+        return f'Group({repr(self.grouped_expr)})'
+
+    @override
+    def __str__(self) -> str:
+        return f'({str(self.grouped_expr)})'
