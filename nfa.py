@@ -35,7 +35,7 @@ class NFA:
     ):
         self.states = set(states)
         self.alphabet = set(alphabet)
-        self.transition_function = dict(transition_function)
+        self.transition_function = deepcopy(transition_function)
         for (q, q_map) in self.transition_function.items():
             self.states.add(q)
             for (symbol, symbol_set) in q_map.items():
@@ -255,55 +255,71 @@ class NFA:
         names: dict[frozenset[State], State] = dict()
 
         def create_name(state: frozenset[State]) -> State:
-            state_name = names.get(state, None)
-            if state_name is None:
-                state_name = '{' + ', '.join(state) + '}'
-                names[state] = state_name
-            return state_name
+            return names.setdefault(
+                state,
+                '{' + ', '.join(state) + '}'
+            )
 
-        partitions = {
-            frozenset(self.accept_states),
-            frozenset(self.states - self.accept_states),
-        }
-        queue = deque(partitions)
+        partitions = set()
+        X = frozenset(self.accept_states)
+        if X:
+            partitions.add(frozenset(X))
+        Y = frozenset(self.states - self.accept_states)
+        if Y:
+            partitions.add(frozenset(Y))
+        queue = set(partitions)
         while queue:
-            current = queue.popleft()
-            for symbol in self.alphabet:
+            A = queue.pop()
+            for c in self.alphabet:
                 X = set()
-                for q in current:
-                    X.update(
-                        self.move_set({q}, symbol)
-                    )
-                new_items = []
+                for q in self.states:
+                    S = self.move({q}, c)
+                    if S and S.issubset(A):
+                        X.add(q)
+                if not X:
+                    continue
                 for Y in partitions.copy():
                     S = frozenset(X.intersection(Y))
                     R = frozenset(Y - X)
                     if S and R:
                         partitions.remove(Y)
-                        new_items.extend([S, R])
+                        partitions.update([S, R])
                         if Y in queue:
-                            queue.extend([S, R])
+                            queue.update([S, R])
                         elif len(S) < len(R):
-                            queue.append(S)
+                            queue.add(S)
                         else:
-                            queue.append(R)
-                partitions.update(new_items)
+                            queue.add(R)
         states: States = set()
-        alphabet = self.alphabet
+        alphabet = set(self.alphabet)
         transition_function: TransitionFunction = dict()
         start_state = ''
         accept_states: States = set()
+        states_partitions_map = {}
+        for Y in partitions:
+            for q in Y:
+                states_partitions_map[q] = Y
         for Y in partitions:
             Y_name = create_name(Y)
             states.add(Y_name)
-            transition_function[Y_name] = {
-                symbol: {
-                    create_name(
-                        frozenset(self.move_set(Y, symbol))
+            for c in alphabet:
+                key = self.move_set(Y, c)
+                if len(key) == 0:
+                    raise ValueError(
+                        f'Partition {Y} goes to empty set on symbol {c}'
                     )
-                }
-                for symbol in alphabet
-            }
+                elif len(key) > 1:
+                    raise ValueError(
+                        f'Partition {Y} is not uniform on symbol {c}'
+                    )
+                key = key.pop()
+                transition_function.setdefault(
+                    Y_name, dict()
+                ).setdefault(
+                    c, set()
+                ).add(
+                    create_name(states_partitions_map[key])
+                )
             if self.start_state in Y:
                 start_state = Y_name
             if Y.intersection(self.accept_states):
