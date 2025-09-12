@@ -236,16 +236,14 @@ class RegularExpressionParser:
                             token_type=TokenType.BLACKSLASH,
                         )
                 else:
-                    print('Trailing slash at pattern end', file=stderr)
-                    exit(1)
+                    raise ValueError('Trailing slash at pattern end')
             case c:  # any other character
                 self.current = Token(
                     value=c,
                     token_type=TokenType.SYBMOL,
                 )
-        if self.current:
-            self.current.pos = self.pos
-            self.pos += len(self.current)
+        self.current.pos = self.pos
+        self.pos += len(self.current.value)
 
     def parse(self) -> RegeularExpression:
         if self.current:
@@ -262,8 +260,7 @@ class RegularExpressionParser:
                     # parsing successful, no erorrs
                     return parsed_expression
             elif error:
-                print(error, file=stderr)
-                exit(1)
+                raise ValueError(error)
         # Empty string pattern
         return EmptyString()
 
