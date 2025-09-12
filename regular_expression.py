@@ -1,4 +1,4 @@
-from nfa import NFA, EMPTY_STRING
+from nfa import NFA, EMPTY_STRING, Symbol
 from enum import Enum
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
@@ -120,3 +120,30 @@ class EmptyString(RegeularExpression):
     @override
     def __str__(self) -> str:
         return 'ε'
+
+
+class Symbol(RegeularExpression):
+    def __init__(self, value: Symbol):
+        self.value: Symbol = value
+
+    @override
+    def to_NFA(self) -> NFA:
+        return NFA(
+            states={'q0', 'q1'},
+            alphabet={self.value},
+            transition_function={
+                'q0': {
+                    self.value: {'q1'}
+                }
+            },
+            start_state='q0',
+            accept_states={'q1'}
+        )
+
+    @override
+    def __repr__(self) -> str:
+        return f'Symbol({repr(self.value)})'
+
+    @override
+    def __str__(self) -> str:
+        return self.value
