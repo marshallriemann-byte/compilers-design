@@ -267,6 +267,7 @@ class RegularExpressionParser:
         initial = self.parse_concatenation()
         error, parsed_expression = initial.error, initial.parsed_expression
         if parsed_expression:
+            alternatives: list[RegeularExpression] = [parsed_expression]
             while not error and self.current.token_type == TokenType.UNION_BAR:
                 self.generate_next_token()  # skip current |
                 right_term = self.parse_concatenation()
@@ -274,11 +275,7 @@ class RegularExpressionParser:
                     parsed_expression = None
                     error = right_term.error
                 elif right_term.parsed_expression:
-                    parsed_expression = Union(
-                        alternatives=[
-                            parsed_expression, right_term.parsed_expression
-                        ]
-                    )
+                    alternatives.append(right_term.parsed_expression)
                 else:
                     # Expected expression after |
                     parsed_expression = None
@@ -286,6 +283,10 @@ class RegularExpressionParser:
                     error += 'Expected expression after |\n'
                     error += f'{self.pattern}\n'
                     error += ' ' * self.pos
+            if len(alternatives) == 1:
+                parsed_expression = alternatives.pop()
+            elif len(alternatives) > 1:
+                parsed_expression = Union(alternatives)
         return ParseResult(parsed_expression, error)
 
     # Concatenation => Star Star*
