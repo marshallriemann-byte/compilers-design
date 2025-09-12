@@ -178,3 +178,34 @@ class RegularExpressionParser:
         self.input_string: str = input_string
         self.pos = 0
         self.current: Token = None
+
+    def generate_next_token(self):
+        match self.input_string[self.pos]:
+            case 'ε':
+                self.current = Token(
+                    value='ε',
+                    token_type=TokenType.EMPTY_STRING,
+                )
+            case '*':
+                self.current = Token(
+                    value='*',
+                    token_type=TokenType.KLEENE_STAR,
+                )
+            case '|':
+                self.current = Token(
+                    value='|',
+                    token_type=TokenType.UNION_BAR,
+                )
+            case '(':
+                self.current = Token(
+                    value='(',
+                    token_type=TokenType.LEFT_PARENTHESIS,
+                )
+            case ')':
+                self.current = Token(
+                    value='(',
+                    token_type=TokenType.RIGHT_PARENTHESIS,
+                )
+        if self.current:
+            self.current.pos = self.pos
+            self.pos += len(self.current)
