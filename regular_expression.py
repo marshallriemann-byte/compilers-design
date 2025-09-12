@@ -261,3 +261,19 @@ class RegularExpressionParser:
                 exit(1)
         # Empty string pattern
         return EmptyString()
+
+    # Expression => Concatenation ( '|' Concatenation )*
+    def parse_expression(self) -> ParseResult:
+        pass
+
+    # Concatenation => Star Star*
+    def parse_concatenation(self) -> ParseResult:
+        pass
+
+    # Star => Primary ( '*' )?
+    def parse_star(self) -> ParseResult:
+        pass
+
+    # Primary => ε | SYMBOL | ( '(' Primary ')' )
+    def parse_primary(self) -> ParseResult:
+        pass
