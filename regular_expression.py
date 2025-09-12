@@ -171,7 +171,8 @@ class Group(RegeularExpression):
 # Expression => Concatenation ( '|' Concatenation )*
 # Concatenation => Star Star*
 # Star => Primary ( '*' )?
-# Primary => ε | SYMBOL | ( '(' Primary ')' )
+# Primary => ε | SYMBOL | Group
+# Group => ( '(' Expression ')' )
 
 
 META_CHARACTERS = {'*', '|', '(', ')', '\\'}
@@ -282,7 +283,7 @@ class RegularExpressionParser:
                     error = f'Error in position {self.pos}\n'
                     error += 'Expected expression after |\n'
                     error += f'{self.pattern}\n'
-                    error += ' ' * self.pos
+                    error += ' ' * self.pos + '^'
             if len(alternatives) == 1:
                 parsed_expression = alternatives.pop()
             elif len(alternatives) > 1:
@@ -319,7 +320,7 @@ class RegularExpressionParser:
             return Star(expr=primary.parsed_expression)
         return primary
 
-    # Primary => ε | SYMBOL | ( '(' Primary ')' )
+    # Primary => ε | SYMBOL | ( '(' Expression ')' )
     def parse_primary(self) -> ParseResult:
         match self.current.token_type:
             case TokenType.EPSILON:
@@ -331,5 +332,28 @@ class RegularExpressionParser:
             case TokenType.LEFT_PARENTHESIS:
                 return self.parse_group()
 
+    # Group => ( '(' Expression ')' )
     def parse_group(self) -> ParseResult:
-        return None
+        expr = self.parse_expression()
+        error, parsed_expression = expr.error, expr.parsed_expression
+        if parsed_expression:
+            self.generate_next_token()
+            if self.current.token_type == TokenType.RIGHT_PARENTHESIS:
+                parsed_expression = Group(
+                    grouped_expr=parsed_expression
+                )
+            else:
+                # Expected ) after expression
+                parsed_expression = None
+                error = f'Error in position {self.pos}\n'
+                error += 'Expected ) after expression\n'
+                error += f'{self.pattern}\n'
+                error += ' ' * self.pos + '^'
+        elif not parsed_expression:
+            # Expected expression after (
+            parsed_expression = None
+            error = f'Error in position {self.pos}\n'
+            error += 'Expected expression after (\n'
+            error += f'{self.pattern}\n'
+            error += ' ' * self.pos + '^'
+        return ParseResult(parsed_expression, error)
