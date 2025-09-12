@@ -264,13 +264,16 @@ class RegularExpressionParser:
         # Empty string pattern
         return EmptyString()
 
+    def check_current_type(self, expected_type: TokenType) -> bool:
+        return self.current and self.current.token_type == expected_type
+
     # Expression => Concatenation ( '|' Concatenation )*
     def parse_expression(self) -> ParseResult:
         initial = self.parse_concatenation()
         error, parsed_expression = initial.error, initial.parsed_expression
         if parsed_expression:
             alternatives: list[RegeularExpression] = [parsed_expression]
-            while not error and self.current.token_type == TokenType.UNION_BAR:
+            while not error and self.check_current_type(TokenType.UNION_BAR):
                 self.generate_next_token()  # skip current |
                 right_term = self.parse_concatenation()
                 if right_term.error:
@@ -297,14 +300,15 @@ class RegularExpressionParser:
         error, parsed_expression = initial.error, initial.parsed_expression
         if parsed_expression:
             sequence: list[RegeularExpression] = [parsed_expression]
-            while not error or not parsed_expression:
-                self.generate_next_token()
+            while not error:
                 right_term = self.parse_star()
                 if right_term.error:
                     parsed_expression = None
                     error = right_term.error
                 elif right_term.parsed_expression:
                     sequence.append(right_term.parsed_expression)
+                else:
+                    break
             if len(sequence) == 1:
                 parsed_expression = sequence.pop()
             elif len(sequence) > 1:
@@ -316,30 +320,51 @@ class RegularExpressionParser:
         primary = self.parse_primary()
         if primary.error:
             return primary
-        self.generate_next_token()
-        if self.current.token_type == TokenType.KLEENE_STAR:
+        elif primary.parsed_expression and\
+                self.check_current_type(TokenType.KLEENE_STAR):
+            self.generate_next_token()  # Consume *
             return Star(expr=primary.parsed_expression)
         return primary
 
     # Primary => ε | SYMBOL | ( '(' Expression ')' )
     def parse_primary(self) -> ParseResult:
+        if not self.current:
+            return ParseResult(
+                parsed_expression=None,
+                error=None
+            )
         match self.current.token_type:
             case TokenType.EPSILON:
-                return EmptyString()
+                self.generate_next_token()
+                return ParseResult(
+                    parsed_expression=EmptyString(),
+                    error=None,
+                )
             case TokenType.SYBMOL:
-                return SymbolExpression(
-                    value=self.current.value
+                symbol_value = self.current.value
+                self.generate_next_token()
+                return ParseResult(
+                    parsed_expression=SymbolExpression(
+                        value=symbol_value
+                    ),
+                    error=None
                 )
             case TokenType.LEFT_PARENTHESIS:
+                self.generate_next_token()  # Consume (
                 return self.parse_group()
+            case _:
+                return ParseResult(
+                    parsed_expression=None,
+                    error=None
+                )
 
     # Group => ( '(' Expression ')' )
     def parse_group(self) -> ParseResult:
         expr = self.parse_expression()
         error, parsed_expression = expr.error, expr.parsed_expression
         if parsed_expression:
-            self.generate_next_token()
-            if self.current.token_type == TokenType.RIGHT_PARENTHESIS:
+            if self.check_current_type(TokenType.RIGHT_PARENTHESIS):
+                self.generate_next_token()  # Consume )
                 parsed_expression = Group(
                     grouped_expr=parsed_expression
                 )
@@ -358,3 +383,12 @@ class RegularExpressionParser:
             error += f'{self.pattern}\n'
             error += ' ' * self.pos + '^'
         return ParseResult(parsed_expression, error)
+
+
+def compile_pattern(pattern: str) -> NFA:
+    return RegularExpressionParser(pattern).parse().to_NFA()
+
+
+if __name__ == '__main__':
+    from pprint import pprint
+    pprint(vars(compile_pattern('(a|b)')), indent=2)
