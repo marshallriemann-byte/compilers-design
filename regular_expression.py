@@ -188,6 +188,7 @@ class RegularExpressionParser:
         self.pattern: str = pattern
         self.pos = 0
         self.current: Token = None
+        self.generate_next_token()
 
     def generate_next_token(self):
         match self.pattern[self.pos]:
@@ -240,3 +241,23 @@ class RegularExpressionParser:
         if self.current:
             self.current.pos = self.pos
             self.pos += len(self.current)
+
+    def parse(self) -> RegeularExpression:
+        if self.current:
+            result = self.parse_expression()
+            error, parsed_expression = result.error, result.parsed_expression
+            if parsed_expression:
+                if error:
+                    raise Exception(
+                        "Error & parsed expression\n" +
+                        f"error: {error}\n" +
+                        f"parsed expression: {parsed_expression}\n"
+                    )
+                else:
+                    # parsing successful, no erorrs
+                    return parsed_expression
+            elif error:
+                print(error, file=stderr)
+                exit(1)
+        # Empty string pattern
+        return EmptyString()
