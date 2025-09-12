@@ -164,3 +164,10 @@ class Group(RegeularExpression):
     @override
     def __str__(self) -> str:
         return f'({str(self.grouped_expr)})'
+
+
+# Regular expressions context free grammar
+# Expression => Concatenation ( '|' Concatenation )*
+# Concatenation => Star Star*
+# Star => Primary ( '*' )?
+# Primary => ε | SYMBOL | ( '(' Primary ')' )
