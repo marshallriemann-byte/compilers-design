@@ -1,4 +1,4 @@
-from nfa import NFA
+from nfa import NFA, EMPTY_STRING
 from enum import Enum
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
@@ -100,3 +100,23 @@ class Star(RegeularExpression):
     @override
     def __str__(self) -> str:
         return f'{str(self.expr)}*'
+
+
+class EmptyString(RegeularExpression):
+    @override
+    def to_NFA(self) -> NFA:
+        return NFA(
+            states={'q0'},
+            alphabet=set(),
+            transition_function=dict(),
+            start_state='q0',
+            accept_states={'q0'},
+        )
+
+    @override
+    def __repr__(self) -> str:
+        return 'EmptyString()'
+
+    @override
+    def __str__(self) -> str:
+        return 'ε'
