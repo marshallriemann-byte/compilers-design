@@ -311,7 +311,13 @@ class RegularExpressionParser:
 
     # Star => Primary ( '*' )?
     def parse_star(self) -> ParseResult:
-        pass
+        primary = self.parse_primary()
+        if primary.error:
+            return primary
+        self.generate_next_token()
+        if self.current.token_type == TokenType.KLEENE_STAR:
+            return Star(expr=primary.parsed_expression)
+        return primary
 
     # Primary => ε | SYMBOL | ( '(' Primary ')' )
     def parse_primary(self) -> ParseResult:
