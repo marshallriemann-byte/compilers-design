@@ -123,7 +123,7 @@ class EmptyString(RegeularExpression):
         return 'ε'
 
 
-class Symbol(RegeularExpression):
+class SymbolExpression(RegeularExpression):
     def __init__(self, value: Symbol):
         self.value: Symbol = value
 
@@ -321,4 +321,15 @@ class RegularExpressionParser:
 
     # Primary => ε | SYMBOL | ( '(' Primary ')' )
     def parse_primary(self) -> ParseResult:
-        pass
+        match self.current.token_type:
+            case TokenType.EPSILON:
+                return EmptyString()
+            case TokenType.SYBMOL:
+                return SymbolExpression(
+                    value=self.current.value
+                )
+            case TokenType.LEFT_PARENTHESIS:
+                return self.parse_group()
+
+    def parse_group(self) -> ParseResult:
+        return None
