@@ -56,9 +56,30 @@ class Union(RegeularExpression):
 
     @override
     def __repr__(self) -> str:
-        value = '|'.join([repr(re) for re in self.alternatives])
+        value = ', '.join([repr(re) for re in self.alternatives])
         return f'Union({value})'
 
     @override
     def __str__(self) -> str:
         return '|'.join([str(re) for re in self.alternatives])
+
+
+class Concatenation(RegeularExpression):
+    def __init__(self, sequence: Sequence[RegeularExpression]):
+        self.sequence: list[RegeularExpression] = list(sequence)
+
+    @override
+    def to_NFA(self) -> NFA:
+        return NFA.concatenate([
+            re.to_NFA()
+            for re in self.sequence
+        ])
+
+    @override
+    def __repr__(self) -> str:
+        value = ', '.join([repr(re) for re in self.sequence])
+        return f'Concatenation({value})'
+
+    @override
+    def __str__(self) -> str:
+        return ''.join([str(re) for re in self.sequence])
