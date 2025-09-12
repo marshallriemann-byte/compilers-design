@@ -323,7 +323,12 @@ class RegularExpressionParser:
         elif primary.parsed_expression and\
                 self.check_current_type(TokenType.KLEENE_STAR):
             self.generate_next_token()  # Consume *
-            return Star(expr=primary.parsed_expression)
+            return ParseResult(
+                parsed_expression=Star(
+                    expr=primary.parsed_expression
+                ),
+                error=None
+            )
         return primary
 
     # Primary => ε | SYMBOL | ( '(' Expression ')' )
