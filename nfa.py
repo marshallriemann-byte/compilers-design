@@ -110,7 +110,9 @@ class NFA:
                 create_name(state), dict()
             ).setdefault(
                 symbol, set()
-            ).update(output)
+            ).add(
+                create_name(output)
+            )
 
         dfa_accept_states: States = set()
 
@@ -123,8 +125,8 @@ class NFA:
                 new_dfa_state = self.move_set(current, symbol)
                 new_dfa_state = frozenset(self.epsilon_closure(new_dfa_state))
                 if not new_dfa_state:
-                    used_sink_state = True
                     add_transition(current, symbol, sink_state)
+                    used_sink_state = True
                 else:
                     add_transition(current, symbol, new_dfa_state)
                     new_name = create_name(new_dfa_state)
@@ -132,8 +134,9 @@ class NFA:
                         queue.append(new_dfa_state)
 
         if used_sink_state:
-            dfa_transition_function[create_name(sink_state)] = {
-                symbol: {create_name(sink_state)}
+            sink_state_name = create_name(sink_state)
+            dfa_transition_function[sink_state_name] = {
+                symbol: {sink_state_name}
                 for symbol in dfa_alphabet
             }
 
@@ -165,7 +168,9 @@ class NFA:
                 q, dict()
             ).setdefault(
                 EMPTY_STRING, set()
-            ).add(star_nfa.start_state)
+            ).add(
+                star_nfa.start_state
+            )
         star_nfa.start_state = star_nfa_start_state
         return star_nfa
 
@@ -196,7 +201,9 @@ class NFA:
                         rename_state(index, q), dict()
                     ).setdefault(
                         EMPTY_STRING, set()
-                    ).add(next_nfa_start_state)
+                    ).add(
+                        next_nfa_start_state
+                    )
         start_state = rename_state(0, automata[0].start_state)
         accept_states = {
             rename_state(len(automata)-1, q)
@@ -273,13 +280,17 @@ class NFA:
             for c in self.alphabet:
                 X = set()
                 for q in self.states:
-                    S = self.move({q}, c)
-                    if S and S.issubset(A):
+                    S = self.move_set({q}, c)
+                    if not S:
+                        raise ValueError(
+                            f'DFA state {q} has no trasition on symbol {c}'
+                        )
+                    elif S.issubset(A):
                         X.add(q)
                 if not X:
                     continue
                 for Y in partitions.copy():
-                    S = frozenset(X.intersection(Y))
+                    S = frozenset(Y.intersection(X))
                     R = frozenset(Y - X)
                     if S and R:
                         partitions.remove(Y)
@@ -295,13 +306,18 @@ class NFA:
         transition_function: TransitionFunction = dict()
         start_state = ''
         accept_states: States = set()
-        states_partitions_map = {}
-        for Y in partitions:
-            for q in Y:
-                states_partitions_map[q] = Y
+        states_partitions_map = {
+            q: Y
+            for q in Y
+            for Y in partitions
+        }
         for Y in partitions:
             Y_name = create_name(Y)
             states.add(Y_name)
+            if self.start_state in Y:
+                start_state = Y_name
+            if Y.intersection(self.accept_states):
+                accept_states.add(Y_name)
             for c in alphabet:
                 key = self.move_set(Y, c)
                 if len(key) == 0:
@@ -320,10 +336,6 @@ class NFA:
                 ).add(
                     create_name(states_partitions_map[key])
                 )
-            if self.start_state in Y:
-                start_state = Y_name
-            if Y.intersection(self.accept_states):
-                accept_states.add(Y_name)
         return NFA(
             states,
             alphabet,
