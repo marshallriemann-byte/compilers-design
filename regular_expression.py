@@ -3,6 +3,7 @@ from enum import Enum
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from typing import override
+from sys import stderr
 
 
 class TokenType(Enum):
@@ -173,6 +174,9 @@ class Group(RegeularExpression):
 # Primary => ε | SYMBOL | ( '(' Primary ')' )
 
 
+META_CHARACTERS = {'*', '|', '(', ')', '\\'}
+
+
 class RegularExpressionParser:
     def __init__(self, input_string: str):
         self.input_string: str = input_string
@@ -206,6 +210,22 @@ class RegularExpressionParser:
                     value='(',
                     token_type=TokenType.RIGHT_PARENTHESIS,
                 )
+            case '\\':
+                if self.pos+1 < len(self.input_string):
+                    char = self.input_string[self.pos+1]
+                    if char in META_CHARACTERS:
+                        self.current = Token(
+                            value=char,
+                            token_type=TokenType.SYBMOL,
+                        )
+                    else:
+                        self.current = Token(
+                            value='\\',
+                            token_type=TokenType.BLACKSLASH,
+                        )
+                else:
+                    print('Trailing slash at pattern end', file=stderr)
+                    exit(1)
         if self.current:
             self.current.pos = self.pos
             self.pos += len(self.current)
