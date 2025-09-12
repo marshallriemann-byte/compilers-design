@@ -17,7 +17,7 @@ class TokenType(Enum):
 
 
 class Token:
-    def __init__(self, value: str, token_type: TokenType, pos: int):
+    def __init__(self, value: str, token_type: TokenType, pos: int = 0):
         self.value: str = value
         self.token_type: TokenType = token_type
         self.pos: int = pos
@@ -192,6 +192,9 @@ class RegularExpressionParser:
         self.generate_next_token()
 
     def generate_next_token(self):
+        if self.pos >= len(self.pattern):
+            self.current = None
+            return
         match self.pattern[self.pos]:
             case 'ε':
                 self.current = Token(
