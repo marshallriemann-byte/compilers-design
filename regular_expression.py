@@ -177,14 +177,20 @@ class Group(RegeularExpression):
 META_CHARACTERS = {'*', '|', '(', ')', '\\'}
 
 
+class ParseResult:
+    def __init__(self, parsed_expression: RegeularExpression, error: str):
+        self.parsed_expression: RegeularExpression = parsed_expression
+        self.error: str = error
+
+
 class RegularExpressionParser:
-    def __init__(self, input_string: str):
-        self.input_string: str = input_string
+    def __init__(self, pattern: str):
+        self.pattern: str = pattern
         self.pos = 0
         self.current: Token = None
 
     def generate_next_token(self):
-        match self.input_string[self.pos]:
+        match self.pattern[self.pos]:
             case 'ε':
                 self.current = Token(
                     value='ε',
@@ -211,8 +217,8 @@ class RegularExpressionParser:
                     token_type=TokenType.RIGHT_PARENTHESIS,
                 )
             case '\\':
-                if self.pos+1 < len(self.input_string):
-                    char = self.input_string[self.pos+1]
+                if self.pos+1 < len(self.pattern):
+                    char = self.pattern[self.pos+1]
                     if char in META_CHARACTERS:
                         self.current = Token(
                             value=char,
