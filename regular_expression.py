@@ -291,7 +291,23 @@ class RegularExpressionParser:
 
     # Concatenation => Star Star*
     def parse_concatenation(self) -> ParseResult:
-        pass
+        initial = self.parse_star()
+        error, parsed_expression = initial.error, initial.parsed_expression
+        if parsed_expression:
+            sequence: list[RegeularExpression] = [parsed_expression]
+            while not error or not parsed_expression:
+                self.generate_next_token()
+                right_term = self.parse_star()
+                if right_term.error:
+                    parsed_expression = None
+                    error = right_term.error
+                elif right_term.parsed_expression:
+                    sequence.append(right_term.parsed_expression)
+            if len(sequence) == 1:
+                parsed_expression = sequence.pop()
+            elif len(sequence) > 1:
+                parsed_expression = Concatenation(sequence)
+        return ParseResult(parsed_expression, error)
 
     # Star => Primary ( '*' )?
     def parse_star(self) -> ParseResult:
