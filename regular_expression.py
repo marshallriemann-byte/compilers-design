@@ -171,3 +171,10 @@ class Group(RegeularExpression):
 # Concatenation => Star Star*
 # Star => Primary ( '*' )?
 # Primary => ε | SYMBOL | ( '(' Primary ')' )
+
+
+class RegularExpressionParser:
+    def __init__(self, input_string: str):
+        self.input_string: str = input_string
+        self.pos = 0
+        self.current: Token = None
