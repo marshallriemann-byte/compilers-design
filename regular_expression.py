@@ -1,4 +1,5 @@
 from enum import Enum
+from abc import ABC, abstractmethod
 
 
 class TokenType(Enum):
@@ -22,3 +23,18 @@ class Token:
         value += f'type={self.token_type}, '
         value += f'pos={self.pos})'
         return value
+
+
+# Regular expressions abtract base class
+class RegeularExpression(ABC):
+    @abstractmethod
+    def to_NFA(self):
+        pass
+
+    @abstractmethod
+    def __repr__(self):
+        pass
+
+    @abstractmethod
+    def __str__(self):
+        pass
