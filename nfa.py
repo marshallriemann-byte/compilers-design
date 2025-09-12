@@ -84,9 +84,9 @@ class NFA:
         return ComputationResult.REJECT
 
     def compute_equivalent_DFA(self) -> Self:
-        names: dict[frozenset[State], State] = dict()
+        names: dict[States, State] = dict()
 
-        def create_name(state: frozenset[State]) -> State:
+        def create_name(state: States) -> State:
             return names.setdefault(
                 state,
                 '{' + ', '.join(state) + '}'
@@ -102,9 +102,9 @@ class NFA:
         dfa_transition_function = dict()
 
         def add_transition(
-            state: frozenset[State],
+            state: States,
             symbol: Symbol,
-            output: frozenset[State]
+            output: States
         ):
             dfa_transition_function.setdefault(
                 create_name(state), dict()
@@ -259,14 +259,6 @@ class NFA:
         )
 
     def compute_minimized_DFA(self):
-        names: dict[frozenset[State], State] = dict()
-
-        def create_name(state: frozenset[State]) -> State:
-            return names.setdefault(
-                state,
-                '{' + ', '.join(state) + '}'
-            )
-
         partitions = set()
         X = frozenset(self.accept_states)
         if X:
@@ -296,26 +288,34 @@ class NFA:
                         partitions.remove(Y)
                         partitions.update([S, R])
                         if Y in queue:
+                            queue.remove(Y)
                             queue.update([S, R])
                         elif len(S) < len(R):
                             queue.add(S)
                         else:
                             queue.add(R)
+
+        names: dict[States, State] = dict()
+
+        def create_name(state: States) -> State:
+            return names.setdefault(
+                state,
+                '{' + ', '.join(state) + '}'
+            )
+
         states: States = set()
         alphabet = set(self.alphabet)
         transition_function: TransitionFunction = dict()
-        start_state = ''
         accept_states: States = set()
         states_partitions_map = {
             q: Y
-            for q in Y
             for Y in partitions
+            for q in Y
         }
+        start_state = states_partitions_map[self.start_state]
         for Y in partitions:
             Y_name = create_name(Y)
             states.add(Y_name)
-            if self.start_state in Y:
-                start_state = Y_name
             if Y.intersection(self.accept_states):
                 accept_states.add(Y_name)
             for c in alphabet:
