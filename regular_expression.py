@@ -199,7 +199,7 @@ class RegularExpressionParser:
             case 'ε':
                 self.current = Token(
                     value='ε',
-                    token_type=TokenType.EMPTY_STRING,
+                    token_type=TokenType.EPSILON,
                 )
             case '*':
                 self.current = Token(
@@ -218,13 +218,14 @@ class RegularExpressionParser:
                 )
             case ')':
                 self.current = Token(
-                    value='(',
+                    value=')',
                     token_type=TokenType.RIGHT_PARENTHESIS,
                 )
             case '\\':
                 if self.pos+1 < len(self.pattern):
                     char = self.pattern[self.pos+1]
                     if char in META_CHARACTERS:
+                        self.pos += 1  # Skip escape backslash
                         self.current = Token(
                             value=char,
                             token_type=TokenType.SYBMOL,
