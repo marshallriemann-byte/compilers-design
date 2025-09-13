@@ -6,7 +6,7 @@ from typing import override
 
 
 class TokenType(Enum):
-    EMPTY_STRING_EXPR = 0  # Empty string
+    EMPTY_STRING_TOKEN = 0  # Empty string
     SYBMOL = 1  # Alphabet symbol
     BLACKSLASH = 2  # \
     LEFT_PARENTHESIS = 3  # (
@@ -200,7 +200,7 @@ class RegularExpressionParser:
         if current_char == EMPTY_STRING_CHAR:
             self.current = Token(
                 value=EMPTY_STRING_CHAR,
-                token_type=TokenType.EMPTY_STRING_EXPR,
+                token_type=TokenType.EMPTY_STRING_TOKEN,
             )
         elif current_char == '*':
             self.current = Token(
@@ -340,7 +340,7 @@ class RegularExpressionParser:
                 error=None
             )
         match self.current.token_type:
-            case TokenType.EMPTY_STRING_EXPR:
+            case TokenType.EMPTY_STRING_TOKEN:
                 self.generate_next_token()
                 return ParseResult(
                     parsed_expression=EmptyString(),
