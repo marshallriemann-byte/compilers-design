@@ -246,6 +246,12 @@ class RegularExpressionParser:
     def parse(self) -> RegularExpression:
         if self.current:
             result = self.parse_expression()
+            if self.current:
+                error = f'Error in position {self.pos}\n'
+                error += 'Unexpected item\n'
+                error += f'{self.pattern}\n'
+                error += ' ' * self.pos + '^'
+                raise ValueError(error)
             error, parsed_expression = result.error, result.parsed_expression
             if parsed_expression:
                 if error:
