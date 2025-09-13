@@ -102,7 +102,7 @@ class Star(RegularExpression):
         return f'{str(self.expr)}*'
 
 
-class EmptyString(RegularExpression):
+class EmptyStringExpression(RegularExpression):
     @override
     def to_NFA(self) -> NFA:
         return NFA(
@@ -115,7 +115,7 @@ class EmptyString(RegularExpression):
 
     @override
     def __repr__(self) -> str:
-        return 'EmptyString()'
+        return 'EmptyStringExpression()'
 
     @override
     def __str__(self) -> str:
@@ -263,7 +263,7 @@ class RegularExpressionParser:
             elif error:
                 raise ValueError(error)
         # Empty string pattern
-        return EmptyString()
+        return EmptyStringExpression()
 
     def check_current_type(self, expected_type: TokenType) -> bool:
         return self.current and self.current.token_type == expected_type
@@ -343,7 +343,7 @@ class RegularExpressionParser:
             case TokenType.EMPTY_STRING_TOKEN:
                 self.generate_next_token()
                 return ParseResult(
-                    parsed_expression=EmptyString(),
+                    parsed_expression=EmptyStringExpression(),
                     error=None,
                 )
             case TokenType.SYBMOL:
