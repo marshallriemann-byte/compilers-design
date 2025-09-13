@@ -16,7 +16,7 @@ type StateMap = dict[Symbol, States]
 type TransitionFunction = dict[State, StateMap]
 
 
-EMPTY_STRING = ''
+EMPTY_STRING_TRANSITION = ''
 
 
 class ComputationResult(Enum):
@@ -39,7 +39,7 @@ class NFA:
         for (q, q_map) in self.transition_function.items():
             self.states.add(q)
             for (symbol, symbol_set) in q_map.items():
-                if symbol != EMPTY_STRING:
+                if symbol != EMPTY_STRING_TRANSITION:
                     self.alphabet.add(symbol)
                 self.states.update(symbol_set)
         self.start_state = start_state
@@ -60,7 +60,7 @@ class NFA:
         queue = deque(out)
         while queue:
             cur = queue.popleft()
-            for s in self.read_transition(cur, EMPTY_STRING):
+            for s in self.read_transition(cur, EMPTY_STRING_TRANSITION):
                 if s not in out:
                     out.add(s)
                     queue.append(s)
@@ -103,7 +103,8 @@ class NFA:
 
         dfa_start_state = frozenset(self.epsilon_closure({self.start_state}))
 
-        dfa_alphabet = {s for s in self.alphabet if s != EMPTY_STRING}
+        dfa_alphabet = {s for s in self.alphabet if s !=
+                        EMPTY_STRING_TRANSITION}
 
         sink_state = frozenset({f'(SINK, {uuid4().hex})'})
         used_sink_state = False
@@ -265,7 +266,7 @@ class NFA:
             star_nfa.transition_function.setdefault(
                 q, dict()
             ).setdefault(
-                EMPTY_STRING, set()
+                EMPTY_STRING_TRANSITION, set()
             ).add(
                 star_nfa.start_state
             )
@@ -298,7 +299,7 @@ class NFA:
                     transition_function.setdefault(
                         rename_state(index, q), dict()
                     ).setdefault(
-                        EMPTY_STRING, set()
+                        EMPTY_STRING_TRANSITION, set()
                     ).add(
                         next_nfa_start_state
                     )
@@ -325,10 +326,10 @@ class NFA:
         start_state = f'(UNION, {uuid4().hex})'
         states.add(start_state)
         transition_function[start_state] = {
-            EMPTY_STRING: set()
+            EMPTY_STRING_TRANSITION: set()
         }
         start_state_set: States =\
-            transition_function[start_state][EMPTY_STRING]
+            transition_function[start_state][EMPTY_STRING_TRANSITION]
         accept_states: States = set()
         # Rename states
         for (index, nfa) in enumerate(automata):
