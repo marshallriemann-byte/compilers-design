@@ -43,7 +43,7 @@ class RegularExpression(ABC):
         pass
 
 
-class Union(RegularExpression):
+class UnionExpression(RegularExpression):
     def __init__(self, alternatives: Sequence[RegularExpression]):
         self.alternatives: list[RegularExpression] = list(alternatives)
 
@@ -57,7 +57,7 @@ class Union(RegularExpression):
     @override
     def __repr__(self) -> str:
         value = ', '.join([repr(re) for re in self.alternatives])
-        return f'Union({value})'
+        return f'UnionExpression({value})'
 
     @override
     def __str__(self) -> str:
@@ -292,7 +292,7 @@ class RegularExpressionParser:
             if len(alternatives) == 1:
                 parsed_expression = alternatives.pop()
             elif len(alternatives) > 1:
-                parsed_expression = Union(alternatives)
+                parsed_expression = UnionExpression(alternatives)
         return ParseResult(parsed_expression, error)
 
     # Concatenation => Star Star*
