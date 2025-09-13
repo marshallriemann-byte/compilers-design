@@ -8,7 +8,6 @@ from typing import override
 class TokenType(Enum):
     EMPTY_STRING_TOKEN = 0  # Empty string
     SYBMOL = 1  # Alphabet symbol
-    BLACKSLASH = 2  # \
     LEFT_PARENTHESIS = 3  # (
     RIGHT_PARENTHESIS = 4  # )
     UNION_BAR = 5  # |
@@ -234,7 +233,7 @@ class RegularExpressionParser:
                 else:
                     self.current = Token(
                         value='\\',
-                        token_type=TokenType.BLACKSLASH,
+                        token_type=TokenType.SYBMOL,
                     )
             else:
                 raise ValueError('Trailing slash at pattern end')
