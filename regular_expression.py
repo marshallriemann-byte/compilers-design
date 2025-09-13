@@ -196,53 +196,50 @@ class RegularExpressionParser:
             self.current = None
             return
         begin = self.pos
-        current_char = self.pattern[self.pos]
-        if current_char == EMPTY_STRING_CHAR:
-            self.current = Token(
-                value=EMPTY_STRING_CHAR,
-                token_type=TokenType.EMPTY_STRING_TOKEN,
-            )
-        elif current_char == '*':
-            self.current = Token(
-                value='*',
-                token_type=TokenType.KLEENE_STAR,
-            )
-        elif current_char == '|':
-            self.current = Token(
-                value='|',
-                token_type=TokenType.UNION_BAR,
-            )
-        elif current_char == '(':
-            self.current = Token(
-                value='(',
-                token_type=TokenType.LEFT_PARENTHESIS,
-            )
-        elif current_char == ')':
-            self.current = Token(
-                value=')',
-                token_type=TokenType.RIGHT_PARENTHESIS,
-            )
-        elif current_char == '\\':
-            if self.pos+1 < len(self.pattern):
-                char = self.pattern[self.pos+1]
-                if char in META_CHARACTERS:
-                    self.pos += 1  # Skip escape backslash
+        match self.pattern[self.pos]:
+            case '*':
+                self.current = Token(
+                    value='*',
+                    token_type=TokenType.KLEENE_STAR,
+                )
+            case '|':
+                self.current = Token(
+                    value='|',
+                    token_type=TokenType.UNION_BAR,
+                )
+            case '(':
+                self.current = Token(
+                    value='(',
+                    token_type=TokenType.LEFT_PARENTHESIS,
+                )
+            case ')':
+                self.current = Token(
+                    value=')',
+                    token_type=TokenType.RIGHT_PARENTHESIS,
+                )
+            case '\\':
+                if self.pos+1 < len(self.pattern):
+                    char = self.pattern[self.pos+1]
+                    if char in META_CHARACTERS:
+                        self.pos += 1  # Skip escape backslash
+                    else:
+                        char = '\\'
                     self.current = Token(
                         value=char,
                         token_type=TokenType.SYBMOL,
                     )
                 else:
-                    self.current = Token(
-                        value='\\',
-                        token_type=TokenType.SYBMOL,
-                    )
-            else:
-                raise ValueError('Trailing slash at pattern end')
-        else:  # any other character
-            self.current = Token(
-                value=current_char,
-                token_type=TokenType.SYBMOL,
-            )
+                    raise ValueError('Trailing slash at pattern end')
+            case c if c == EMPTY_STRING_CHAR:
+                self.current = Token(
+                    value=EMPTY_STRING_CHAR,
+                    token_type=TokenType.EMPTY_STRING_TOKEN,
+                )
+            case c:   # any other character
+                self.current = Token(
+                    value=c,
+                    token_type=TokenType.SYBMOL,
+                )
         self.current.pos = begin
         self.pos += 1
 
