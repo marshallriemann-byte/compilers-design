@@ -159,6 +159,7 @@ class NFA:
         )
 
     def compute_minimized_DFA(self):
+        self = self.compute_equivalent_DFA().rename_states()
         partitions = set()
         X = frozenset(self.accept_states)
         if X:
