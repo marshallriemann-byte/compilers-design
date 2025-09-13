@@ -1,4 +1,4 @@
-from nfa import NFA, EMPTY_STRING, Symbol
+from nfa import NFA, EMPTY_STRING_TRANSITION, Symbol
 from enum import Enum
 from abc import ABC, abstractmethod
 from collections.abc import Sequence

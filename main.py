@@ -90,25 +90,25 @@ N5 = NFA(
     alphabet={'a', 'b'},
     transition_function={
         '0': {
-            EMPTY_STRING: {'1', '7'},
+            EMPTY_STRING_TRANSITION: {'1', '7'},
         },
         '1': {
-            EMPTY_STRING: {'2', '4'},
+            EMPTY_STRING_TRANSITION: {'2', '4'},
         },
         '2': {
             'a': {'3'},
         },
         '3': {
-            EMPTY_STRING: {'6'},
+            EMPTY_STRING_TRANSITION: {'6'},
         },
         '4': {
             'b': {'5'},
         },
         '5': {
-            EMPTY_STRING: {'6'},
+            EMPTY_STRING_TRANSITION: {'6'},
         },
         '6': {
-            EMPTY_STRING: {'1', '7'},
+            EMPTY_STRING_TRANSITION: {'1', '7'},
         },
         '7': {
             'a': {'8'}
@@ -194,7 +194,7 @@ N9 = NFA(
     alphabet={'a', 'b'},
     transition_function={
         '0': {
-            EMPTY_STRING: {'1', '2'}
+            EMPTY_STRING_TRANSITION: {'1', '2'}
         },
         '1': {
             'a': {'3'},
@@ -247,7 +247,7 @@ N11 = NFA(
             'b': {'1'},
         },
         '2': {
-            EMPTY_STRING: {'0'},
+            EMPTY_STRING_TRANSITION: {'0'},
             'a': {'2'},
             'b': {'2', '3'},
         },
