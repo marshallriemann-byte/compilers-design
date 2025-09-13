@@ -222,10 +222,6 @@ class NFA:
                     raise ValueError(
                         f'Partition {Y} goes to empty set on symbol {c}'
                     )
-                elif len(key) > 1:
-                    raise ValueError(
-                        f'Partition {Y} is not uniform on symbol {c}'
-                    )
                 key = key.pop()
                 transition_function.setdefault(
                     Y_name, dict()
