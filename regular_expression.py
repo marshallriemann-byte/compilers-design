@@ -3,11 +3,10 @@ from enum import Enum
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from typing import override
-from sys import stderr
 
 
 class TokenType(Enum):
-    EPSILON = 0  # ε Empty string
+    EMPTY_STRING_EXPR = 0  # Empty string
     SYBMOL = 1  # Alphabet symbol
     BLACKSLASH = 2  # \
     LEFT_PARENTHESIS = 3  # (
@@ -120,7 +119,7 @@ class EmptyString(RegeularExpression):
 
     @override
     def __str__(self) -> str:
-        return 'ε'
+        return EMPTY_STRING_CHAR
 
 
 class SymbolExpression(RegeularExpression):
@@ -175,7 +174,9 @@ class Group(RegeularExpression):
 # Group => ( '(' Expression ')' )
 
 
-META_CHARACTERS = {'*', '|', '(', ')', '\\'}
+# Special character to represent empty string
+EMPTY_STRING_CHAR = '#'
+META_CHARACTERS = {EMPTY_STRING_CHAR, '*', '|', '(', ')', '\\'}
 
 
 class ParseResult:
@@ -195,53 +196,53 @@ class RegularExpressionParser:
         if self.pos >= len(self.pattern):
             self.current = None
             return
-        match self.pattern[self.pos]:
-            case 'ε':
-                self.current = Token(
-                    value='ε',
-                    token_type=TokenType.EPSILON,
-                )
-            case '*':
-                self.current = Token(
-                    value='*',
-                    token_type=TokenType.KLEENE_STAR,
-                )
-            case '|':
-                self.current = Token(
-                    value='|',
-                    token_type=TokenType.UNION_BAR,
-                )
-            case '(':
-                self.current = Token(
-                    value='(',
-                    token_type=TokenType.LEFT_PARENTHESIS,
-                )
-            case ')':
-                self.current = Token(
-                    value=')',
-                    token_type=TokenType.RIGHT_PARENTHESIS,
-                )
-            case '\\':
-                if self.pos+1 < len(self.pattern):
-                    char = self.pattern[self.pos+1]
-                    if char in META_CHARACTERS:
-                        self.pos += 1  # Skip escape backslash
-                        self.current = Token(
-                            value=char,
-                            token_type=TokenType.SYBMOL,
-                        )
-                    else:
-                        self.current = Token(
-                            value='\\',
-                            token_type=TokenType.BLACKSLASH,
-                        )
+        current_char = self.pattern[self.pos]
+        if current_char == EMPTY_STRING_CHAR:
+            self.current = Token(
+                value=EMPTY_STRING_CHAR,
+                token_type=TokenType.EMPTY_STRING_EXPR,
+            )
+        elif current_char == '*':
+            self.current = Token(
+                value='*',
+                token_type=TokenType.KLEENE_STAR,
+            )
+        elif current_char == '|':
+            self.current = Token(
+                value='|',
+                token_type=TokenType.UNION_BAR,
+            )
+        elif current_char == '(':
+            self.current = Token(
+                value='(',
+                token_type=TokenType.LEFT_PARENTHESIS,
+            )
+        elif current_char == ')':
+            self.current = Token(
+                value=')',
+                token_type=TokenType.RIGHT_PARENTHESIS,
+            )
+        elif current_char == '\\':
+            if self.pos+1 < len(self.pattern):
+                char = self.pattern[self.pos+1]
+                if char in META_CHARACTERS:
+                    self.pos += 1  # Skip escape backslash
+                    self.current = Token(
+                        value=char,
+                        token_type=TokenType.SYBMOL,
+                    )
                 else:
-                    raise ValueError('Trailing slash at pattern end')
-            case c:  # any other character
-                self.current = Token(
-                    value=c,
-                    token_type=TokenType.SYBMOL,
-                )
+                    self.current = Token(
+                        value='\\',
+                        token_type=TokenType.BLACKSLASH,
+                    )
+            else:
+                raise ValueError('Trailing slash at pattern end')
+        else:  # any other character
+            self.current = Token(
+                value=current_char,
+                token_type=TokenType.SYBMOL,
+            )
         self.current.pos = self.pos
         self.pos += len(self.current.value)
 
@@ -339,7 +340,7 @@ class RegularExpressionParser:
                 error=None
             )
         match self.current.token_type:
-            case TokenType.EPSILON:
+            case TokenType.EMPTY_STRING_EXPR:
                 self.generate_next_token()
                 return ParseResult(
                     parsed_expression=EmptyString(),
@@ -391,7 +392,8 @@ class RegularExpressionParser:
 
 
 def compile_pattern(pattern: str) -> NFA:
-    return RegularExpressionParser(pattern).parse().to_NFA()
+    re = RegularExpressionParser(pattern).parse()
+    return re.to_NFA()
 
 
 if __name__ == '__main__':
