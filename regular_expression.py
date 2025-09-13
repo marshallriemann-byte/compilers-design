@@ -195,6 +195,7 @@ class RegularExpressionParser:
         if self.pos >= len(self.pattern):
             self.current = None
             return
+        begin = self.pos
         current_char = self.pattern[self.pos]
         if current_char == EMPTY_STRING_CHAR:
             self.current = Token(
@@ -242,8 +243,8 @@ class RegularExpressionParser:
                 value=current_char,
                 token_type=TokenType.SYBMOL,
             )
-        self.current.pos = self.pos
-        self.pos += len(self.current.value)
+        self.current.pos = begin
+        self.pos += 1
 
     def parse(self) -> RegularExpression:
         if self.current:
