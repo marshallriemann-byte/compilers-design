@@ -168,7 +168,7 @@ class Group(RegularExpression):
 # Regular expressions context free grammar
 # Expression => Concatenation ( '|' Concatenation )*
 # Concatenation => Star Star*
-# Star => Primary ( '*' )?
+# Star => Primary ( '*' )*
 # Primary => ε | SYMBOL | Group
 # Group => ( '(' Expression ')' )
 
@@ -319,20 +319,18 @@ class RegularExpressionParser:
                 parsed_expression = Concatenation(sequence)
         return ParseResult(parsed_expression, error)
 
-    # Star => Primary ( '*' )?
+    # Star => Primary ( '*' )*
     def parse_star(self) -> ParseResult:
         primary = self.parse_primary()
-        if primary.error:
-            return primary
-        elif primary.parsed_expression and\
-                self.check_current_type(TokenType.KLEENE_STAR):
-            self.generate_next_token()  # Consume *
-            return ParseResult(
-                parsed_expression=Star(
-                    expr=primary.parsed_expression
-                ),
-                error=None
-            )
+        if primary.parsed_expression:
+            parsed_expression = primary.parsed_expression
+            while self.check_current_type(TokenType.KLEENE_STAR):
+                self.generate_next_token()  # Consume *
+                parsed_expression = Star(
+                    expr=parsed_expression
+                )
+            error = None
+            return ParseResult(parsed_expression, error)
         return primary
 
     # Primary => ε | SYMBOL | ( '(' Expression ')' )
