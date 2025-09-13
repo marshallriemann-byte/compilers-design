@@ -243,6 +243,24 @@ class NFA:
             accept_states
         )
 
+    def rename_states(self) -> Self:
+        counter = 0
+        names: dict[State, int] = dict()
+        for q in self.states:
+            names[q] = str(counter)
+            counter += 1
+        self.states = {names[q] for q in self.states}
+        self.transition_function = {
+            names[q]: {
+                c: {names[r] for r in c_set}
+                for (c, c_set) in q_map.items()
+            }
+            for (q, q_map) in self.transition_function.items()
+        }
+        self.start_state = names[self.start_state]
+        self.accept_states = {names[q] for q in self.accept_states}
+        return self
+
     def __mul__(self, other: Self) -> Self:
         return NFA.concatenate([self, other])
 
