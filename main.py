@@ -1,13 +1,145 @@
-from nfa import NFA
-from regular_expression import RegularExpressionParser, RegeularExpression
+from nfa import NFA, State, EMPTY_STRING_TRANSITION
+from regular_expression import RegularExpression
+from regular_expression import RegularExpressionParser
+from regular_expression import EmptyStringExpression
+from regular_expression import SymbolExpression
+from regular_expression import UnionExpression
+from regular_expression import Star
+from regular_expression import Concatenation
+from regular_expression import Group
+from copy import deepcopy
+from uuid import uuid4
+from collections.abc import Sequence
+from itertools import permutations
 
 
-def to_regular_expression_object(pattern: str) -> RegeularExpression:
+def to_regular_expression_object(pattern: str) -> RegularExpression:
     return RegularExpressionParser(pattern).parse()
 
 
 def regular_expression_to_NFA(pattern: str) -> NFA:
     return RegularExpressionParser(pattern).parse().to_NFA()
+
+
+def NFA_to_regular_expression(
+        nfa: NFA,
+        removal_sequence: Sequence[State] = None
+) -> RegularExpression:
+    if not removal_sequence:
+        removal_sequence = list(nfa.states)
+    if nfa.states != set(removal_sequence):
+        raise ValueError(
+            f'Incomplete removal sequence, missing {
+                nfa.states - set(removal_sequence)}'
+        )
+    # GNFA construction
+    table: dict[State, dict[State, RegularExpression]] = dict()
+    for (q, q_map) in nfa.transition_function.items():
+        q_table = table.setdefault(q, dict())
+        for (c, c_set) in q_map.items():
+            if c == EMPTY_STRING_TRANSITION:
+                c_expr = EmptyStringExpression()
+            else:
+                c_expr = SymbolExpression(value=c)
+            for r in c_set:
+                q_to_r = q_table.get(r, None)
+                if not q_to_r:
+                    q_table[r] = c_expr
+                elif isinstance(q_to_r, UnionExpression):
+                    q_table[r] = deepcopy(q_to_r)
+                    q_table[r].alternatives.append(c_expr)
+                else:
+                    q_table[r] = UnionExpression(
+                        alternatives=[deepcopy(q_to_r), c_expr]
+                    )
+
+    gnfa_start_state = f'(GNFA-START, {uuid4().hex})'
+    table[gnfa_start_state] = {
+        nfa.start_state: EmptyStringExpression()
+    }
+    gnfa_accept_state = f'(GNFA-ACCEPT, {uuid4().hex})'
+    for q in nfa.accept_states:
+        q_map = table.setdefault(q, dict())
+        q_map[gnfa_accept_state] = EmptyStringExpression()
+
+    for leaving in removal_sequence:
+        leaving_map = table.get(leaving, None)
+        if not leaving_map:
+            continue
+        iteration_set = {q for q in nfa.states if q != leaving}
+        senders = iteration_set.union({gnfa_start_state})
+        for sender in senders:
+            sender_map = table.get(sender, None)
+            if not sender_map or not sender_map.get(leaving, None):
+                continue
+            sender_to_leaving = sender_map[leaving]
+            receivers = {
+                q
+                for q in iteration_set.union({gnfa_accept_state})
+                if q != leaving
+            }
+            for receiver in receivers:
+                leaving_to_receiver = leaving_map.get(receiver, None)
+                if not leaving_to_receiver:
+                    continue
+
+                leaving_self_loop = leaving_map.get(leaving, None)
+                if not leaving_self_loop or\
+                        isinstance(leaving_self_loop, EmptyStringExpression):
+                    # star of empty (language/string) is just empty string
+                    leaving_self_loop = EmptyStringExpression()
+                else:
+                    leaving_self_loop = Star(expr=leaving_self_loop)
+
+                new_path: list[RegularExpression] = []
+                sender_to_receiver = sender_map.get(receiver, None)
+                if sender_to_receiver:
+                    if isinstance(sender_to_receiver, UnionExpression):
+                        new_path.extend(
+                            deepcopy(sender_to_receiver.alternatives)
+                        )
+                    else:
+                        new_path.append(
+                            deepcopy(sender_to_receiver)
+                        )
+
+                sequence: list[RegularExpression] = []
+                if isinstance(sender_to_leaving, UnionExpression):
+                    sequence.append(
+                        Group(grouped_expr=deepcopy(sender_to_leaving))
+                    )
+                elif not isinstance(sender_to_leaving, EmptyStringExpression):
+                    sequence.append(deepcopy(sender_to_leaving))
+
+                if not isinstance(leaving_self_loop, EmptyStringExpression):
+                    sequence.append(leaving_self_loop)
+
+                if isinstance(leaving_to_receiver, UnionExpression):
+                    sequence.append(
+                        Group(grouped_expr=deepcopy(leaving_to_receiver))
+                    )
+                elif not isinstance(leaving_to_receiver, EmptyStringExpression):
+                    sequence.append(deepcopy(leaving_to_receiver))
+
+                new_path.append(Concatenation(sequence))
+                sender_map[receiver] = UnionExpression(alternatives=new_path)
+        del table[leaving]
+        for (_, q_map) in table.items():
+            try:
+                del q_map[leaving]
+            except KeyError:
+                pass
+    re = table[gnfa_start_state].get(gnfa_accept_state, None)
+    if not re:
+        print('This NFA has empty language')
+    return re
+
+
+def get_all_regular_expressions(nfa: NFA) -> list[RegularExpression]:
+    return [
+        NFA_to_regular_expression(nfa, states_permutation)
+        for states_permutation in permutations(list(nfa.states))
+    ]
 
 
 N1 = NFA(
