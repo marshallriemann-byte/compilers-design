@@ -1,5 +1,14 @@
-from NFA import *
-from regular_expression import *
+from nfa import NFA
+from regular_expression import RegularExpressionParser, RegeularExpression
+
+
+def to_regular_expression_object(pattern: str) -> RegeularExpression:
+    return RegularExpressionParser(pattern).parse()
+
+
+def regular_expression_to_NFA(pattern: str) -> NFA:
+    return RegularExpressionParser(pattern).parse().to_NFA()
+
 
 N1 = NFA(
     # Accept strings with even number of a's

@@ -389,8 +389,3 @@ class RegularExpressionParser:
             error += f'{self.pattern}\n'
             error += ' ' * self.pos + '^'
         return ParseResult(parsed_expression, error)
-
-
-def compile_pattern(pattern: str) -> NFA:
-    re = RegularExpressionParser(pattern).parse()
-    return re.to_NFA()
