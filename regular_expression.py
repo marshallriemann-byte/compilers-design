@@ -394,10 +394,3 @@ class RegularExpressionParser:
 def compile_pattern(pattern: str) -> NFA:
     re = RegularExpressionParser(pattern).parse()
     return re.to_NFA()
-
-
-if __name__ == '__main__':
-    nfa = compile_pattern('(a|b)(a|b)')
-    nfa = nfa.compute_equivalent_DFA()
-    nfa = nfa.compute_minimized_DFA()
-    print(vars(nfa))
