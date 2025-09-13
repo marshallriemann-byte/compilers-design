@@ -207,11 +207,10 @@ class NFA:
         transition_function: TransitionFunction = dict()
         accept_states: States = set()
         states_partitions_map = {
-            q: Y
+            q: create_name(Y)
             for Y in partitions
             for q in Y
         }
-        start_state = states_partitions_map[self.start_state]
         for Y in partitions:
             Y_name = create_name(Y)
             states.add(Y_name)
@@ -233,8 +232,9 @@ class NFA:
                 ).setdefault(
                     c, set()
                 ).add(
-                    create_name(states_partitions_map[key])
+                    states_partitions_map[key]
                 )
+        start_state = states_partitions_map[self.start_state]
         return NFA(
             states,
             alphabet,
