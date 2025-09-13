@@ -29,7 +29,7 @@ class Token:
 
 
 # Regular expressions abtract base class
-class RegeularExpression(ABC):
+class RegularExpression(ABC):
     @abstractmethod
     def to_NFA(self) -> NFA:
         pass
@@ -43,9 +43,9 @@ class RegeularExpression(ABC):
         pass
 
 
-class Union(RegeularExpression):
-    def __init__(self, alternatives: Sequence[RegeularExpression]):
-        self.alternatives: list[RegeularExpression] = list(alternatives)
+class Union(RegularExpression):
+    def __init__(self, alternatives: Sequence[RegularExpression]):
+        self.alternatives: list[RegularExpression] = list(alternatives)
 
     @override
     def to_NFA(self) -> NFA:
@@ -64,9 +64,9 @@ class Union(RegeularExpression):
         return '|'.join([str(re) for re in self.alternatives])
 
 
-class Concatenation(RegeularExpression):
-    def __init__(self, sequence: Sequence[RegeularExpression]):
-        self.sequence: list[RegeularExpression] = list(sequence)
+class Concatenation(RegularExpression):
+    def __init__(self, sequence: Sequence[RegularExpression]):
+        self.sequence: list[RegularExpression] = list(sequence)
 
     @override
     def to_NFA(self) -> NFA:
@@ -85,9 +85,9 @@ class Concatenation(RegeularExpression):
         return ''.join([str(re) for re in self.sequence])
 
 
-class Star(RegeularExpression):
-    def __init__(self, expr: RegeularExpression):
-        self.expr: RegeularExpression = expr
+class Star(RegularExpression):
+    def __init__(self, expr: RegularExpression):
+        self.expr: RegularExpression = expr
 
     @override
     def to_NFA(self) -> NFA:
@@ -102,7 +102,7 @@ class Star(RegeularExpression):
         return f'{str(self.expr)}*'
 
 
-class EmptyString(RegeularExpression):
+class EmptyString(RegularExpression):
     @override
     def to_NFA(self) -> NFA:
         return NFA(
@@ -122,7 +122,7 @@ class EmptyString(RegeularExpression):
         return EMPTY_STRING_CHAR
 
 
-class SymbolExpression(RegeularExpression):
+class SymbolExpression(RegularExpression):
     def __init__(self, value: Symbol):
         self.value: Symbol = value
 
@@ -149,9 +149,9 @@ class SymbolExpression(RegeularExpression):
         return self.value
 
 
-class Group(RegeularExpression):
-    def __init__(self, grouped_expr: RegeularExpression):
-        self.grouped_expr: RegeularExpression = grouped_expr
+class Group(RegularExpression):
+    def __init__(self, grouped_expr: RegularExpression):
+        self.grouped_expr: RegularExpression = grouped_expr
 
     @override
     def to_NFA(self) -> NFA:
@@ -180,8 +180,8 @@ META_CHARACTERS = {EMPTY_STRING_CHAR, '*', '|', '(', ')', '\\'}
 
 
 class ParseResult:
-    def __init__(self, parsed_expression: RegeularExpression, error: str):
-        self.parsed_expression: RegeularExpression = parsed_expression
+    def __init__(self, parsed_expression: RegularExpression, error: str):
+        self.parsed_expression: RegularExpression = parsed_expression
         self.error: str = error
 
 
@@ -246,7 +246,7 @@ class RegularExpressionParser:
         self.current.pos = self.pos
         self.pos += len(self.current.value)
 
-    def parse(self) -> RegeularExpression:
+    def parse(self) -> RegularExpression:
         if self.current:
             result = self.parse_expression()
             error, parsed_expression = result.error, result.parsed_expression
@@ -273,7 +273,7 @@ class RegularExpressionParser:
         initial = self.parse_concatenation()
         error, parsed_expression = initial.error, initial.parsed_expression
         if parsed_expression:
-            alternatives: list[RegeularExpression] = [parsed_expression]
+            alternatives: list[RegularExpression] = [parsed_expression]
             while not error and self.check_current_type(TokenType.UNION_BAR):
                 self.generate_next_token()  # skip current |
                 right_term = self.parse_concatenation()
@@ -300,7 +300,7 @@ class RegularExpressionParser:
         initial = self.parse_star()
         error, parsed_expression = initial.error, initial.parsed_expression
         if parsed_expression:
-            sequence: list[RegeularExpression] = [parsed_expression]
+            sequence: list[RegularExpression] = [parsed_expression]
             while not error:
                 right_term = self.parse_star()
                 if right_term.error:
