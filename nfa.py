@@ -83,6 +83,15 @@ class NFA:
             return ComputationResult.ACCEPT
         return ComputationResult.REJECT
 
+    def enumerate_language(self):
+        queue = deque([''])
+        while True:
+            cur = queue.popleft()
+            if self.compute(cur) == ComputationResult.ACCEPT:
+                print(cur)
+            for symbol in self.alphabet:
+                queue.append(cur + symbol)
+
     def compute_equivalent_DFA(self) -> Self:
         names: dict[States, State] = dict()
 
@@ -148,14 +157,100 @@ class NFA:
             accept_states=dfa_accept_states
         )
 
-    def enumerate_language(self):
-        queue = deque([''])
-        while True:
-            cur = queue.popleft()
-            if self.compute(cur) == ComputationResult.ACCEPT:
-                print(cur)
-            for symbol in self.alphabet:
-                queue.append(cur + symbol)
+    def compute_minimized_DFA(self):
+        partitions = set()
+        X = frozenset(self.accept_states)
+        if X:
+            partitions.add(frozenset(X))
+        Y = frozenset(self.states - self.accept_states)
+        if Y:
+            partitions.add(frozenset(Y))
+        queue = set(partitions)
+        while queue:
+            A = queue.pop()
+            for c in self.alphabet:
+                X = set()
+                for q in self.states:
+                    S = self.move_set({q}, c)
+                    if not S:
+                        raise ValueError(
+                            f'DFA state {q} has no trasition on symbol {c}'
+                        )
+                    elif S.issubset(A):
+                        X.add(q)
+                if not X:
+                    continue
+                for Y in partitions.copy():
+                    S = frozenset(Y.intersection(X))
+                    R = frozenset(Y - X)
+                    if S and R:
+                        partitions.remove(Y)
+                        partitions.update([S, R])
+                        if Y in queue:
+                            queue.remove(Y)
+                            queue.update([S, R])
+                        elif len(S) < len(R):
+                            queue.add(S)
+                        else:
+                            queue.add(R)
+
+        names: dict[States, State] = dict()
+
+        def create_name(state: States) -> State:
+            return names.setdefault(
+                state,
+                '{' + ', '.join(state) + '}'
+            )
+
+        states: States = set()
+        alphabet = set(self.alphabet)
+        transition_function: TransitionFunction = dict()
+        accept_states: States = set()
+        states_partitions_map = {
+            q: Y
+            for Y in partitions
+            for q in Y
+        }
+        start_state = states_partitions_map[self.start_state]
+        for Y in partitions:
+            Y_name = create_name(Y)
+            states.add(Y_name)
+            if Y.intersection(self.accept_states):
+                accept_states.add(Y_name)
+            for c in alphabet:
+                key = self.move_set(Y, c)
+                if len(key) == 0:
+                    raise ValueError(
+                        f'Partition {Y} goes to empty set on symbol {c}'
+                    )
+                elif len(key) > 1:
+                    raise ValueError(
+                        f'Partition {Y} is not uniform on symbol {c}'
+                    )
+                key = key.pop()
+                transition_function.setdefault(
+                    Y_name, dict()
+                ).setdefault(
+                    c, set()
+                ).add(
+                    create_name(states_partitions_map[key])
+                )
+        return NFA(
+            states,
+            alphabet,
+            transition_function,
+            start_state,
+            accept_states
+        )
+
+    def __mul__(self, other: Self) -> Self:
+        return NFA.concatenate([self, other])
+
+    def __or__(self, other: Self) -> Self:
+        return NFA.union([self, other])
+
+    def __invert__(self) -> Self:
+        return NFA.kleene_star(self)
 
     @staticmethod
     def kleene_star(nfa: Self) -> Self:
@@ -257,101 +352,6 @@ class NFA:
             start_state,
             accept_states
         )
-
-    def compute_minimized_DFA(self):
-        partitions = set()
-        X = frozenset(self.accept_states)
-        if X:
-            partitions.add(frozenset(X))
-        Y = frozenset(self.states - self.accept_states)
-        if Y:
-            partitions.add(frozenset(Y))
-        queue = set(partitions)
-        while queue:
-            A = queue.pop()
-            for c in self.alphabet:
-                X = set()
-                for q in self.states:
-                    S = self.move_set({q}, c)
-                    if not S:
-                        raise ValueError(
-                            f'DFA state {q} has no trasition on symbol {c}'
-                        )
-                    elif S.issubset(A):
-                        X.add(q)
-                if not X:
-                    continue
-                for Y in partitions.copy():
-                    S = frozenset(Y.intersection(X))
-                    R = frozenset(Y - X)
-                    if S and R:
-                        partitions.remove(Y)
-                        partitions.update([S, R])
-                        if Y in queue:
-                            queue.remove(Y)
-                            queue.update([S, R])
-                        elif len(S) < len(R):
-                            queue.add(S)
-                        else:
-                            queue.add(R)
-
-        names: dict[States, State] = dict()
-
-        def create_name(state: States) -> State:
-            return names.setdefault(
-                state,
-                '{' + ', '.join(state) + '}'
-            )
-
-        states: States = set()
-        alphabet = set(self.alphabet)
-        transition_function: TransitionFunction = dict()
-        accept_states: States = set()
-        states_partitions_map = {
-            q: Y
-            for Y in partitions
-            for q in Y
-        }
-        start_state = states_partitions_map[self.start_state]
-        for Y in partitions:
-            Y_name = create_name(Y)
-            states.add(Y_name)
-            if Y.intersection(self.accept_states):
-                accept_states.add(Y_name)
-            for c in alphabet:
-                key = self.move_set(Y, c)
-                if len(key) == 0:
-                    raise ValueError(
-                        f'Partition {Y} goes to empty set on symbol {c}'
-                    )
-                elif len(key) > 1:
-                    raise ValueError(
-                        f'Partition {Y} is not uniform on symbol {c}'
-                    )
-                key = key.pop()
-                transition_function.setdefault(
-                    Y_name, dict()
-                ).setdefault(
-                    c, set()
-                ).add(
-                    create_name(states_partitions_map[key])
-                )
-        return NFA(
-            states,
-            alphabet,
-            transition_function,
-            start_state,
-            accept_states
-        )
-
-    def __mul__(self, other: Self) -> Self:
-        return NFA.concatenate([self, other])
-
-    def __or__(self, other: Self) -> Self:
-        return NFA.union([self, other])
-
-    def __invert__(self) -> Self:
-        return NFA.kleene_star(self)
 
 
 if __name__ == '__main__':

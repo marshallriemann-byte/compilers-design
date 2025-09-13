@@ -395,5 +395,7 @@ def compile_pattern(pattern: str) -> NFA:
 
 
 if __name__ == '__main__':
-    from pprint import pprint
-    pprint(vars(compile_pattern('(a|b)')), indent=2)
+    nfa = compile_pattern('(a|b)(a|b)')
+    nfa = nfa.compute_equivalent_DFA()
+    nfa = nfa.compute_minimized_DFA()
+    print(vars(nfa))
