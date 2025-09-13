@@ -59,8 +59,8 @@ class NFA:
         out = set(states)
         queue = deque(out)
         while queue:
-            cur = queue.popleft()
-            for s in self.read_transition(cur, EMPTY_STRING_TRANSITION):
+            q = queue.popleft()
+            for s in self.read_transition(q, EMPTY_STRING_TRANSITION):
                 if s not in out:
                     out.add(s)
                     queue.append(s)
@@ -86,11 +86,11 @@ class NFA:
     def enumerate_language(self):
         queue = deque([''])
         while True:
-            cur = queue.popleft()
-            if self.compute(cur) == ComputationResult.ACCEPT:
-                print(cur)
-            for symbol in self.alphabet:
-                queue.append(cur + symbol)
+            s = queue.popleft()
+            if self.compute(s) == ComputationResult.ACCEPT:
+                print(s)
+            for c in self.alphabet:
+                queue.append(s + c)
 
     def compute_equivalent_DFA(self) -> Self:
         names: dict[States, State] = dict()
@@ -103,8 +103,10 @@ class NFA:
 
         dfa_start_state = frozenset(self.epsilon_closure({self.start_state}))
 
-        dfa_alphabet = {s for s in self.alphabet if s !=
-                        EMPTY_STRING_TRANSITION}
+        dfa_alphabet = {
+            s for s in self.alphabet
+            if s != EMPTY_STRING_TRANSITION
+        }
 
         sink_state = frozenset({f'(SINK, {uuid4().hex})'})
         used_sink_state = False
@@ -219,6 +221,7 @@ class NFA:
                 accept_states.add(P_name)
             transition_function[P_name] = {
                 c: {states_partitions_map[self.move_set(P, c).pop()]}
+                for c in alphabet
             }
         start_state = states_partitions_map[self.start_state]
         return NFA(
