@@ -180,14 +180,14 @@ class NFA:
                         X.add(q)
                 if not X:
                     continue
-                for Y in partitions.copy():
-                    S = frozenset(Y.intersection(X))
-                    R = frozenset(Y - X)
+                for P in partitions.copy():
+                    S = frozenset(P.intersection(X))
+                    R = frozenset(P - X)
                     if S and R:
-                        partitions.remove(Y)
+                        partitions.remove(P)
                         partitions.update([S, R])
-                        if Y in queue:
-                            queue.remove(Y)
+                        if P in queue:
+                            queue.remove(P)
                             queue.update([S, R])
                         elif len(S) < len(R):
                             queue.add(S)
@@ -207,29 +207,18 @@ class NFA:
         transition_function: TransitionFunction = dict()
         accept_states: States = set()
         states_partitions_map = {
-            q: create_name(Y)
-            for Y in partitions
-            for q in Y
+            q: create_name(P)
+            for P in partitions
+            for q in P
         }
-        for Y in partitions:
-            Y_name = create_name(Y)
-            states.add(Y_name)
-            if Y.intersection(self.accept_states):
-                accept_states.add(Y_name)
-            for c in alphabet:
-                key = self.move_set(Y, c)
-                if len(key) == 0:
-                    raise ValueError(
-                        f'Partition {Y} goes to empty set on symbol {c}'
-                    )
-                key = key.pop()
-                transition_function.setdefault(
-                    Y_name, dict()
-                ).setdefault(
-                    c, set()
-                ).add(
-                    states_partitions_map[key]
-                )
+        for P in partitions:
+            P_name = create_name(P)
+            states.add(P_name)
+            if P.intersection(self.accept_states):
+                accept_states.add(P_name)
+            transition_function[P_name] = {
+                c: {states_partitions_map[self.move_set(P, c).pop()]}
+            }
         start_state = states_partitions_map[self.start_state]
         return NFA(
             states,
