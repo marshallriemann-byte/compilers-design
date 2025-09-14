@@ -2,7 +2,7 @@ from nfa import NFA, Symbol
 from enum import Enum
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
-from typing import override
+from typing import override, Self
 
 
 class TokenType(Enum):
@@ -39,6 +39,21 @@ class RegularExpression(ABC):
 
     @abstractmethod
     def __str__(self) -> str:
+        pass
+
+    @abstractmethod
+    def __mul__(self, other: Self) -> Self:
+        # Concatenation
+        pass
+
+    @abstractmethod
+    def __or__(self, other: Self) -> Self:
+        # Union
+        pass
+
+    @abstractmethod
+    def __invert__(self) -> Self:
+        # Kleene star
         pass
 
 
