@@ -27,11 +27,13 @@ def NFA_to_regular_expression(
 ) -> RegularExpression:
     if not removal_sequence:
         removal_sequence = list(nfa.states)
+
     if nfa.states != set(removal_sequence):
         raise ValueError(
             f'Incomplete removal sequence, missing {
                 nfa.states - set(removal_sequence)}'
         )
+
     # GNFA construction
     table: dict[State, dict[State, RegularExpression]] = dict()
     for (q, q_map) in nfa.transition_function.items():
@@ -57,6 +59,7 @@ def NFA_to_regular_expression(
     table[gnfa_start_state] = {
         nfa.start_state: EmptyStringExpression()
     }
+
     gnfa_accept_state = f'(GNFA-ACCEPT, {uuid4().hex})'
     for q in nfa.accept_states:
         q_map = table.setdefault(q, dict())
@@ -74,15 +77,13 @@ def NFA_to_regular_expression(
                 continue
             sender_to_leaving = sender_map[leaving]
             receivers = {
-                q
-                for q in iteration_set.union({gnfa_accept_state})
+                q for q in iteration_set.union({gnfa_accept_state})
                 if q != leaving
             }
             for receiver in receivers:
                 leaving_to_receiver = leaving_map.get(receiver, None)
                 if not leaving_to_receiver:
                     continue
-
                 leaving_self_loop = leaving_map.get(leaving, None)
                 if not leaving_self_loop or\
                         isinstance(leaving_self_loop, EmptyStringExpression):

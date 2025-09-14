@@ -180,6 +180,41 @@ class Group(RegularExpression):
         return f'({str(self.grouped_expr)})'
 
 
+class EmptyLanguage(RegularExpression):
+    @override
+    def to_NFA(self) -> NFA:
+        return NFA(
+            states={'q0'},
+            alphabet=set(),
+            transition_function=dict(),
+            start_state='q0',
+            accept_states=set()
+        )
+
+    @override
+    def __repr__(self) -> str:
+        return 'EmptyLanguage()'
+
+    @override
+    def __str__(self) -> str:
+        return 'Φ'
+
+    @override
+    def __mul__(self, other: Self) -> Self:
+        # Concatenation
+        return EmptyLanguage()
+
+    @override
+    def __or__(self, other: Self) -> Self:
+        # Union
+        return other
+
+    @override
+    def __invert__(self) -> Self:
+        # Kleene star
+        return EmptyStringExpression()
+
+
 # Regular expressions context free grammar
 # Expression => Concatenation ( '|' Concatenation )*
 # Concatenation => Star Star*
