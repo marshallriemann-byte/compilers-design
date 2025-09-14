@@ -45,16 +45,7 @@ def NFA_to_regular_expression(
             else:
                 c_expr = SymbolExpression(value=c)
             for r in c_set:
-                q_to_r = q_table.get(r, None)
-                if not q_to_r:
-                    q_table[r] = c_expr
-                elif isinstance(q_to_r, UnionExpression):
-                    q_table[r] = deepcopy(q_to_r)
-                    q_table[r].alternatives.append(c_expr)
-                else:
-                    q_table[r] = UnionExpression(
-                        alternatives=[deepcopy(q_to_r), c_expr]
-                    )
+                q_table[r] = q_table.get(r, EmptyLanguage()) | c_expr
 
     gnfa_start_state = f'(GNFA-START, {uuid4().hex})'
     table[gnfa_start_state] = {
