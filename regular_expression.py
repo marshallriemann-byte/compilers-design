@@ -90,7 +90,10 @@ class Concatenation(RegularExpression):
 
     @override
     def __str__(self) -> str:
-        return ''.join([str(re) for re in self.sequence])
+        return ''.join([
+            f'({str(re)})' if isinstance(re, UnionExpression) else str(re)
+            for re in self.sequence
+        ])
 
 
 class Star(RegularExpression):
@@ -107,7 +110,11 @@ class Star(RegularExpression):
 
     @override
     def __str__(self) -> str:
-        return f'{str(self.expr)}*'
+        match self.expr:
+            case UnionExpression() | Concatenation():
+                return f'({str(self.expr)})*'
+            case _:
+                return f'{str(self.expr)}*'
 
 
 class EmptyStringExpression(RegularExpression):
