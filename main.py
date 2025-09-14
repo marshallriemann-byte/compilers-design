@@ -80,8 +80,8 @@ def NFA_to_regular_expression(
                 loop = ~leaving_self_loop
                 sender_to_receiver = sender_map.get(receiver, EmptyLanguage())
                 sender_map[receiver] = sender_to_receiver | (
-                    sender_to_leaving *
-                    loop *
+                    sender_to_leaving +
+                    loop +
                     leaving_to_receiver
                 )
         del table[leaving]

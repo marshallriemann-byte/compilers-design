@@ -43,7 +43,7 @@ class RegularExpression(ABC):
     def __str__(self) -> str:
         pass
 
-    def __mul__(self, other: Self) -> Self:
+    def __add__(self, other: Self) -> Self:
         return concatenate(self, other)
 
     def __or__(self, other: Self) -> Self:
