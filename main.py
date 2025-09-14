@@ -76,11 +76,12 @@ def NFA_to_regular_expression(
                 leaving_to_receiver = leaving_map.get(receiver, None)
                 if not leaving_to_receiver:
                     continue
-                leaving_self_loop = ~leaving_map.get(leaving, EmptyLanguage())
+                leaving_self_loop = leaving_map.get(leaving, EmptyLanguage())
+                loop = ~leaving_self_loop
                 sender_to_receiver = sender_map.get(receiver, EmptyLanguage())
                 sender_map[receiver] = sender_to_receiver | (
                     sender_to_leaving *
-                    ~leaving_self_loop *
+                    loop *
                     leaving_to_receiver
                 )
         del table[leaving]
@@ -89,8 +90,8 @@ def NFA_to_regular_expression(
                 del q_map[leaving]
             except KeyError:
                 pass
-    re = table[gnfa_start_state].get(gnfa_accept_state, None)
-    if not re:
+    re = table[gnfa_start_state].get(gnfa_accept_state, EmptyLanguage())
+    if isinstance(re, EmptyLanguage):
         print('This NFA has empty language')
     return re
 
