@@ -2,6 +2,7 @@ from nfa import NFA, State, EMPTY_STRING_TRANSITION
 from regular_expression import RegularExpression
 from regular_expression import RegularExpressionParser
 from regular_expression import EmptyStringExpression
+from regular_expression import EmptyLanguage
 from regular_expression import SymbolExpression
 from regular_expression import UnionExpression
 from regular_expression import Star
@@ -84,46 +85,13 @@ def NFA_to_regular_expression(
                 leaving_to_receiver = leaving_map.get(receiver, None)
                 if not leaving_to_receiver:
                     continue
-                leaving_self_loop = leaving_map.get(leaving, None)
-                if not leaving_self_loop or\
-                        isinstance(leaving_self_loop, EmptyStringExpression):
-                    # star of empty (language/string) is just empty string
-                    leaving_self_loop = EmptyStringExpression()
-                else:
-                    leaving_self_loop = Star(expr=leaving_self_loop)
-
-                new_path: list[RegularExpression] = []
-                sender_to_receiver = sender_map.get(receiver, None)
-                if sender_to_receiver:
-                    if isinstance(sender_to_receiver, UnionExpression):
-                        new_path.extend(
-                            deepcopy(sender_to_receiver.alternatives)
-                        )
-                    else:
-                        new_path.append(
-                            deepcopy(sender_to_receiver)
-                        )
-
-                sequence: list[RegularExpression] = []
-                if isinstance(sender_to_leaving, UnionExpression):
-                    sequence.append(
-                        Group(grouped_expr=deepcopy(sender_to_leaving))
-                    )
-                elif not isinstance(sender_to_leaving, EmptyStringExpression):
-                    sequence.append(deepcopy(sender_to_leaving))
-
-                if not isinstance(leaving_self_loop, EmptyStringExpression):
-                    sequence.append(leaving_self_loop)
-
-                if isinstance(leaving_to_receiver, UnionExpression):
-                    sequence.append(
-                        Group(grouped_expr=deepcopy(leaving_to_receiver))
-                    )
-                elif not isinstance(leaving_to_receiver, EmptyStringExpression):
-                    sequence.append(deepcopy(leaving_to_receiver))
-
-                new_path.append(Concatenation(sequence))
-                sender_map[receiver] = UnionExpression(alternatives=new_path)
+                leaving_self_loop = ~leaving_map.get(leaving, EmptyLanguage())
+                sender_to_receiver = sender_map.get(receiver, EmptyLanguage())
+                sender_map[receiver] = sender_to_receiver | (
+                    sender_to_leaving *
+                    ~leaving_self_loop *
+                    leaving_to_receiver
+                )
         del table[leaving]
         for (_, q_map) in table.items():
             try:
