@@ -41,15 +41,12 @@ class RegularExpression(ABC):
     def __str__(self) -> str:
         pass
 
-    @abstractmethod
     def __mul__(self, other: Self) -> Self:
         return concatenate(self, other)
 
-    @abstractmethod
     def __or__(self, other: Self) -> Self:
         return union(self, other)
 
-    @abstractmethod
     def __invert__(self) -> Self:
         return kleene_star(self)
 
