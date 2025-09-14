@@ -427,7 +427,7 @@ class RegularExpressionParser:
 
     # Primary => ε | SYMBOL | ( '(' Expression ')' )
     def parse_primary(self) -> ParseResult:
-        current_type = None if self.current else self.current.token_type
+        current_type = None if not self.current else self.current.token_type
         match current_type:
             case TokenType.EMPTY_STRING_TOKEN:
                 self.generate_next_token()
