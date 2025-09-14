@@ -43,18 +43,15 @@ class RegularExpression(ABC):
 
     @abstractmethod
     def __mul__(self, other: Self) -> Self:
-        # Concatenation
-        pass
+        return concatenate(self, other)
 
     @abstractmethod
     def __or__(self, other: Self) -> Self:
-        # Union
-        pass
+        return union(self, other)
 
     @abstractmethod
     def __invert__(self) -> Self:
-        # Kleene star
-        pass
+        return kleene_star(self)
 
 
 class UnionExpression(RegularExpression):
@@ -199,20 +196,53 @@ class EmptyLanguage(RegularExpression):
     def __str__(self) -> str:
         return 'Φ'
 
-    @override
-    def __mul__(self, other: Self) -> Self:
-        # Concatenation
-        return EmptyLanguage()
 
-    @override
-    def __or__(self, other: Self) -> Self:
-        # Union
-        return other
+def union(a: RegularExpression, b: RegularExpression) -> RegularExpression:
+    match (a, b):
+        case (EmptyLanguage(), other):
+            # ∅ U R = R
+            return other
+        case (other, EmptyLanguage()):
+            # R U ∅ = R
+            return other
+        case (UnionExpression(alternatives=alts1), UnionExpression(alternatives=alts2)):
+            return UnionExpression(alternatives=[*alts1, *alts2])
+        case (UnionExpression(alternatives=alts1), other):
+            return UnionExpression(alternatives=[*alts1, other])
+        case (other, UnionExpression(alternatives=alts1)):
+            return UnionExpression(alternatives=[other, *alts1])
+        case (x, y):
+            return UnionExpression(alternatives=[x, y])
 
-    @override
-    def __invert__(self) -> Self:
-        # Kleene star
-        return EmptyStringExpression()
+
+def concatenate(a: RegularExpression, b: RegularExpression) -> RegularExpression:
+    match (a, b):
+        case (EmptyLanguage(), _) | (_, EmptyLanguage()):
+            # R ∅ = ∅ R = ∅
+            return EmptyLanguage()
+        case (EmptyStringExpression(), x) | (x, EmptyStringExpression()):
+            # R ε = ε R = R
+            return x
+        case (Concatenation(sequence=seq1), Concatenation(sequence=seq2)):
+            return Concatenation(sequence=[*seq1, *seq2])
+        case (Concatenation(sequence=seq1), other):
+            return Concatenation(sequence=[*seq1, other])
+        case (other, Concatenation(sequence=seq1)):
+            return Concatenation(sequence=[other, *seq1])
+        case (x, y):
+            return Concatenation(sequence=[x, y])
+
+
+def kleene_star(x: RegularExpression) -> RegularExpression:
+    match x:
+        case EmptyLanguage() | EmptyStringExpression():
+            # ∅* = ε, ε* = ε
+            return EmptyStringExpression()
+        case Star(expr=_):
+            # x = R* => x* = (R*)* = R*
+            return x
+        case expr:
+            return Star(expr)
 
 
 # Regular expressions context free grammar
