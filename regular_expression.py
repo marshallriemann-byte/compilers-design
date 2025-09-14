@@ -335,15 +335,15 @@ class RegularExpressionParser:
     def parse(self) -> RegularExpression:
         if self.current:
             result = self.parse_expression()
-            if self.current:
-                error = f'Error in position {self.pos}\n'
-                error += 'Unexpected item\n'
-                error += f'{self.pattern}\n'
-                error += ' ' * self.current.pos + '^'
-                raise ValueError(error)
             error, parsed_expression = result.error, result.parsed_expression
             if parsed_expression:
-                if error:
+                if self.current:
+                    error = f'Error in position {self.pos}\n'
+                    error += 'Unexpected item\n'
+                    error += f'{self.pattern}\n'
+                    error += ' ' * self.current.pos + '^'
+                    raise ValueError(error)
+                elif error:
                     raise Exception(
                         "Error & parsed expression\n" +
                         f"error: {error}\n" +
@@ -381,10 +381,13 @@ class RegularExpressionParser:
                     error += 'Expected expression after |\n'
                     error += f'{self.pattern}\n'
                     error += ' ' * self.pos + '^'
-            if len(alternatives) == 1:
-                parsed_expression = alternatives.pop()
-            elif len(alternatives) > 1:
-                parsed_expression = UnionExpression(alternatives)
+            if not error:
+                if len(alternatives) == 1:
+                    parsed_expression = alternatives.pop()
+                else:
+                    parsed_expression = UnionExpression(alternatives)
+            else:
+                parsed_expression = None
         return ParseResult(parsed_expression, error)
 
     # Concatenation => Star Star*
@@ -401,11 +404,12 @@ class RegularExpressionParser:
                 elif right_term.parsed_expression:
                     sequence.append(right_term.parsed_expression)
                 else:
+                    # No more expressions to concatenate
                     break
             if not error:
                 if len(sequence) == 1:
                     parsed_expression = sequence.pop()
-                elif len(sequence) > 1:
+                else:
                     parsed_expression = Concatenation(sequence)
             else:
                 parsed_expression = None
@@ -415,15 +419,17 @@ class RegularExpressionParser:
     def parse_star(self) -> ParseResult:
         primary = self.parse_primary()
         if primary.parsed_expression:
+            error = None
             parsed_expression = primary.parsed_expression
             while self.check_current_type(TokenType.KLEENE_STAR):
                 self.generate_next_token()  # Consume *
                 parsed_expression = Star(
                     expr=parsed_expression
                 )
-            error = None
-            return ParseResult(parsed_expression, error)
-        return primary
+        else:
+            parsed_expression = None
+            error = primary.error
+        return ParseResult(parsed_expression, error)
 
     # Primary => ε | SYMBOL | ( '(' Expression ')' )
     def parse_primary(self) -> ParseResult:
@@ -458,7 +464,9 @@ class RegularExpressionParser:
     def parse_group(self) -> ParseResult:
         expr = self.parse_expression()
         error, parsed_expression = expr.error, expr.parsed_expression
-        if parsed_expression:
+        if error:
+            parsed_expression = None
+        elif parsed_expression:
             if self.check_current_type(TokenType.RIGHT_PARENTHESIS):
                 self.generate_next_token()  # Consume )
                 parsed_expression = Group(
@@ -471,7 +479,7 @@ class RegularExpressionParser:
                 error += 'Expected ) after expression\n'
                 error += f'{self.pattern}\n'
                 error += ' ' * self.pos + '^'
-        elif not parsed_expression:
+        else:
             # Expected expression after (
             parsed_expression = None
             error = f'Error in position {self.pos}\n'
