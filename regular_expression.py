@@ -1,3 +1,5 @@
+# Regular expressions
+
 from nfa import NFA, Symbol
 from enum import Enum
 from abc import ABC, abstractmethod
@@ -305,8 +307,10 @@ class RegularExpressionParser:
                 if self.pos+1 < len(self.pattern):
                     char = self.pattern[self.pos+1]
                     if char in META_CHARACTERS:
+                        # Metacharacter symbol
                         self.pos += 1  # Skip escape backslash
                     else:
+                        # ignore next char, emit backslash as symbol
                         char = '\\'
                     self.current = Token(
                         value=char,
@@ -314,16 +318,17 @@ class RegularExpressionParser:
                     )
                 else:
                     raise ValueError('Trailing slash at pattern end')
-            case c if c == EMPTY_STRING_CHAR:
-                self.current = Token(
-                    value=EMPTY_STRING_CHAR,
-                    token_type=TokenType.EMPTY_STRING_TOKEN,
-                )
-            case c:   # any other character
-                self.current = Token(
-                    value=c,
-                    token_type=TokenType.SYBMOL,
-                )
+            case c:
+                if c == EMPTY_STRING_CHAR:
+                    self.current = Token(
+                        value=EMPTY_STRING_CHAR,
+                        token_type=TokenType.EMPTY_STRING_TOKEN,
+                    )
+                else:   # any other character
+                    self.current = Token(
+                        value=c,
+                        token_type=TokenType.SYBMOL,
+                    )
         self.current.pos = begin
         self.pos += 1
 
@@ -397,10 +402,13 @@ class RegularExpressionParser:
                     sequence.append(right_term.parsed_expression)
                 else:
                     break
-            if len(sequence) == 1:
-                parsed_expression = sequence.pop()
-            elif len(sequence) > 1:
-                parsed_expression = Concatenation(sequence)
+            if not error:
+                if len(sequence) == 1:
+                    parsed_expression = sequence.pop()
+                elif len(sequence) > 1:
+                    parsed_expression = Concatenation(sequence)
+            else:
+                parsed_expression = None
         return ParseResult(parsed_expression, error)
 
     # Star => Primary ( '*' )*
@@ -419,12 +427,8 @@ class RegularExpressionParser:
 
     # Primary => ε | SYMBOL | ( '(' Expression ')' )
     def parse_primary(self) -> ParseResult:
-        if not self.current:
-            return ParseResult(
-                parsed_expression=None,
-                error=None
-            )
-        match self.current.token_type:
+        current_type = None if self.current else self.current.token_type
+        match current_type:
             case TokenType.EMPTY_STRING_TOKEN:
                 self.generate_next_token()
                 return ParseResult(
@@ -433,7 +437,7 @@ class RegularExpressionParser:
                 )
             case TokenType.SYBMOL:
                 symbol_value = self.current.value
-                self.generate_next_token()
+                self.generate_next_token()  # Consume (
                 return ParseResult(
                     parsed_expression=SymbolExpression(
                         value=symbol_value
@@ -444,6 +448,7 @@ class RegularExpressionParser:
                 self.generate_next_token()  # Consume (
                 return self.parse_group()
             case _:
+                # No token avaliable, or a weird token
                 return ParseResult(
                     parsed_expression=None,
                     error=None
