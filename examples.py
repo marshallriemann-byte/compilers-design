@@ -1,8 +1,8 @@
 import main
-import nfa
+from nfa import EMPTY_STRING_TRANSITION, NFA
 import regular_expression
 
-N1 = nfa.NFA(
+N1 = NFA(
     # Accept strings with even number of a's
     states={'even', 'odd'},
     alphabet={'a', 'b'},
@@ -20,7 +20,7 @@ N1 = nfa.NFA(
     accept_states={'even'}
 )
 
-N2 = nfa.NFA(
+N2 = NFA(
     # Accept strings with only a's and no b's
     states={'A', 'B'},
     alphabet={'a', 'b'},
@@ -38,7 +38,7 @@ N2 = nfa.NFA(
     accept_states={'A'}
 )
 
-N3 = nfa.NFA(
+N3 = NFA(
     # Accept (a|b)*ab
     states={'0', '1', '2'},
     alphabet={'a', 'b'},
@@ -55,7 +55,7 @@ N3 = nfa.NFA(
     accept_states={'2'}
 )
 
-N4 = nfa.NFA(
+N4 = NFA(
     # Accept (a|b)*ab, DFA of N3
     states={'0', '1', '2'},
     alphabet={'a', 'b'},
@@ -77,7 +77,7 @@ N4 = nfa.NFA(
     accept_states={'2'}
 )
 
-N5 = nfa.NFA(
+N5 = NFA(
     states={'0', '1', '2', '3', '4', '5', '6', '7', '8'},
     alphabet={'a', 'b'},
     transition_function={
@@ -110,7 +110,7 @@ N5 = nfa.NFA(
     accept_states={'8'}
 )
 
-N6 = nfa.NFA(
+N6 = NFA(
     # Accepts aa*|(b|aa*b)(b|aa*b)*aa*, DFA of N5
     states={'s0', 's1', 's2'},
     alphabet={'a', 'b'},
@@ -132,7 +132,7 @@ N6 = nfa.NFA(
     accept_states={'s1'}
 )
 
-N7 = nfa.NFA(
+N7 = NFA(
     # Accepts (ab)*
     states={'0', '1', '2', '3'},
     alphabet={'a', 'b'},
@@ -158,7 +158,7 @@ N7 = nfa.NFA(
     accept_states={'2'}
 )
 
-N8 = nfa.NFA(
+N8 = NFA(
     # Accepts a*b*
     states={'0', '1', '2'},
     alphabet={'a', 'b'},
@@ -180,7 +180,7 @@ N8 = nfa.NFA(
     accept_states={'0', '1'}
 )
 
-N9 = nfa.NFA(
+N9 = NFA(
     # Accepts a|b
     states={'0', '1', '2', '3', '4'},
     alphabet={'a', 'b'},
@@ -199,7 +199,7 @@ N9 = nfa.NFA(
     accept_states={'3', '4'}
 )
 
-N10 = nfa.NFA(
+N10 = NFA(
     # DFA of N9
     states={'0', '1', '2', '3'},
     alphabet={'a', 'b'},
@@ -225,7 +225,7 @@ N10 = nfa.NFA(
     accept_states={'1', '2'}
 )
 
-N11 = nfa.NFA(
+N11 = NFA(
     # Accepts b*ab*a(a|bb*a)*bb*
     states={'0', '1', '2', '3'},
     alphabet={'a', 'b'},
@@ -248,7 +248,7 @@ N11 = nfa.NFA(
     accept_states={'3'}
 )
 
-N12 = nfa.NFA(
+N12 = NFA(
     # DFA of N11
     states={'0', '1', '2', '3'},
     alphabet={'a', 'b'},
@@ -274,7 +274,7 @@ N12 = nfa.NFA(
     accept_states={'3'}
 )
 
-N13 = nfa.NFA(
+N13 = NFA(
     # Accept a single 'a'
     states={'0', '1', '2'},
     alphabet={'a', 'b'},
@@ -296,7 +296,7 @@ N13 = nfa.NFA(
     accept_states={'1'}
 )
 
-N14 = nfa.NFA(
+N14 = NFA(
     states={'a', 'b', 'c', 'd', 'e', 'f'},
     alphabet={'0', '1'},
     transition_function={
@@ -325,7 +325,7 @@ N14 = nfa.NFA(
     accept_states={'c', 'e', 'e'},
 )
 
-N15 = nfa.NFA(
+N15 = NFA(
     states={'0', '1', '2', '3', '4', '5', '6'},
     alphabet={'a', 'b'},
     transition_function={
@@ -361,6 +361,3 @@ N15 = nfa.NFA(
     start_state='0',
     accept_states={'2', '4'}
 )
-
-used = N15.compute_minimized_DFA()
-print(vars(used))
