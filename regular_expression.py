@@ -10,7 +10,7 @@ from copy import deepcopy
 
 class TokenType(Enum):
     EMPTY_STRING_TOKEN = 0  # Empty string
-    SYBMOL = 1  # Alphabet symbol
+    SYMBOL = 1  # Alphabet symbol
     LEFT_PARENTHESIS = 3  # (
     RIGHT_PARENTHESIS = 4  # )
     UNION_BAR = 5  # |
@@ -315,7 +315,7 @@ class RegularExpressionParser:
                         char = '\\'
                     self.current = Token(
                         value=char,
-                        token_type=TokenType.SYBMOL,
+                        token_type=TokenType.SYMBOL,
                     )
                 else:
                     raise ValueError('Trailing slash at pattern end')
@@ -328,7 +328,7 @@ class RegularExpressionParser:
                 else:   # any other character
                     self.current = Token(
                         value=c,
-                        token_type=TokenType.SYBMOL,
+                        token_type=TokenType.SYMBOL,
                     )
         self.current.pos = begin
         self.pos += 1
@@ -449,7 +449,7 @@ class RegularExpressionParser:
                     parsed_expression=EmptyStringAST(),
                     error=None,
                 )
-            case TokenType.SYBMOL:
+            case TokenType.SYMBOL:
                 symbol_value = self.current.value
                 self.generate_next_token()  # Consume (
                 return ParseResult(
