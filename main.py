@@ -1,6 +1,6 @@
 from nfa import NFA, State, EMPTY_STRING_TRANSITION
 from regular_expression import RegularExpression
-from regular_expression import EmptyStringExpression
+from regular_expression import EmptyStringAST
 from regular_expression import EmptyLanguage
 from regular_expression import SymbolExpression
 from uuid import uuid4
@@ -27,7 +27,7 @@ def NFA_to_regular_expression(
         q_table = table.setdefault(q, dict())
         for (c, c_set) in q_map.items():
             if c == EMPTY_STRING_TRANSITION:
-                c_expr = EmptyStringExpression()
+                c_expr = EmptyStringAST()
             else:
                 c_expr = SymbolExpression(value=c)
             for r in c_set:
@@ -35,13 +35,13 @@ def NFA_to_regular_expression(
 
     gnfa_start_state = f'(GNFA-START, {uuid4().hex})'
     table[gnfa_start_state] = {
-        nfa.start_state: EmptyStringExpression()
+        nfa.start_state: EmptyStringAST()
     }
 
     gnfa_accept_state = f'(GNFA-ACCEPT, {uuid4().hex})'
     for q in nfa.accept_states:
         q_map = table.setdefault(q, dict())
-        q_map[gnfa_accept_state] = EmptyStringExpression()
+        q_map[gnfa_accept_state] = EmptyStringAST()
 
     for leaving in removal_sequence:
         leaving_map = table.get(leaving, None)

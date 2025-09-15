@@ -120,7 +120,7 @@ class StarAST(RegularExpressionAST):
                 return f'{str(self.inner_expr)}*'
 
 
-class EmptyStringExpression(RegularExpressionAST):
+class EmptyStringAST(RegularExpressionAST):
     @override
     def to_NFA(self) -> NFA:
         return NFA(
@@ -227,7 +227,7 @@ def concatenate(a: RegularExpressionAST, b: RegularExpressionAST) -> RegularExpr
         case (EmptyLanguage(), _) | (_, EmptyLanguage()):
             # R ∅ = ∅ R = ∅
             return EmptyLanguage()
-        case (EmptyStringExpression(), x) | (x, EmptyStringExpression()):
+        case (EmptyStringAST(), x) | (x, EmptyStringAST()):
             # R ε = ε R = R
             return x
         case (ConcatenationAST(sequence=seq1), ConcatenationAST(sequence=seq2)):
@@ -242,9 +242,9 @@ def concatenate(a: RegularExpressionAST, b: RegularExpressionAST) -> RegularExpr
 
 def kleene_star(x: RegularExpressionAST) -> RegularExpressionAST:
     match x:
-        case EmptyLanguage() | EmptyStringExpression():
+        case EmptyLanguage() | EmptyStringAST():
             # ∅* = ε, ε* = ε
-            return EmptyStringExpression()
+            return EmptyStringAST()
         case StarAST():
             # x = R* => x* = (R*)* = R*
             return x
@@ -356,7 +356,7 @@ class RegularExpressionParser:
             elif error:
                 raise ValueError(error)
         # Empty string pattern
-        return EmptyStringExpression()
+        return EmptyStringAST()
 
     def check_current_type(self, expected_type: TokenType) -> bool:
         return self.current and self.current.token_type == expected_type
@@ -405,7 +405,7 @@ class RegularExpressionParser:
                 elif right_term.parsed_expression:
                     if not isinstance(
                         right_term.parsed_expression,
-                        EmptyStringExpression
+                        EmptyStringAST
                     ):
                         # Concatenate non empty string patterns only
                         sequence.append(right_term.parsed_expression)
@@ -446,7 +446,7 @@ class RegularExpressionParser:
             case TokenType.EMPTY_STRING_TOKEN:
                 self.generate_next_token()
                 return ParseResult(
-                    parsed_expression=EmptyStringExpression(),
+                    parsed_expression=EmptyStringAST(),
                     error=None,
                 )
             case TokenType.SYBMOL:
