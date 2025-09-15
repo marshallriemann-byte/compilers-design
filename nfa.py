@@ -163,14 +163,17 @@ class NFA:
     def compute_minimized_DFA(self):
         is_deterministic = True
         for q in self.states:
-            q_map = self.transition_function.get(q, None)
-            if not q_map or EMPTY_STRING_TRANSITION in q_map:
+            q_map = self.transition_function.get(q, dict())
+            empty_string_transition_set = q_map.get(
+                EMPTY_STRING_TRANSITION, set()
+            )
+            if not q_map or empty_string_transition_set:
                 is_deterministic = False
                 break
             else:
                 for c in self.alphabet:
-                    c_set = q_map.get(c, None)
-                    if not c_set or len(c_set) > 1:
+                    c_set = q_map.get(c, set())
+                    if len(c_set) == 0 or len(c_set) > 1:
                         is_deterministic = False
                         break
                 if not is_deterministic:
