@@ -98,7 +98,7 @@ class NFA:
         def create_name(state: States) -> State:
             return names.setdefault(
                 state,
-                '{' + ', '.join(state) + '}'
+                '{' + ', '.join(sorted(state)) + '}'
             )
 
         dfa_start_state = frozenset(self.epsilon_closure({self.start_state}))
@@ -225,7 +225,7 @@ class NFA:
         def create_name(state: States) -> State:
             return names.setdefault(
                 state,
-                '{' + ', '.join(state) + '}'
+                '{' + ', '.join(sorted(state)) + '}'
             )
 
         states: States = set()
@@ -258,7 +258,7 @@ class NFA:
     def rename_states(self) -> Self:
         counter = 0
         names: dict[State, int] = dict()
-        for q in self.states:
+        for q in sorted(self.states):
             names[q] = str(counter)
             counter += 1
         self.states = {names[q] for q in self.states}
