@@ -167,7 +167,7 @@ class SymbolAST(RegularExpressionAST):
         return self.value
 
 
-class Group(RegularExpressionAST):
+class GroupAST(RegularExpressionAST):
     def __init__(self, inner_expr: RegularExpressionAST):
         self.inner_expr: RegularExpressionAST = inner_expr
 
@@ -477,9 +477,9 @@ class RegularExpressionParser:
         elif parsed_expression:
             if self.check_current_type(TokenType.RIGHT_PARENTHESIS):
                 self.generate_next_token()  # Consume )
-                if not isinstance(parsed_expression, Group):
+                if not isinstance(parsed_expression, GroupAST):
                     # Group an expression only it's not already a group
-                    parsed_expression = Group(
+                    parsed_expression = GroupAST(
                         inner_expr=parsed_expression
                     )
             else:
