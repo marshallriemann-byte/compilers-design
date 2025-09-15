@@ -1,7 +1,7 @@
 from nfa import NFA, State, EMPTY_STRING_TRANSITION
 from regular_expression import RegularExpression
 from regular_expression import EmptyStringAST
-from regular_expression import EmptyLanguage
+from regular_expression import EmptyLanguageAST
 from regular_expression import SymbolAST
 from uuid import uuid4
 from collections.abc import Sequence
@@ -31,7 +31,7 @@ def NFA_to_regular_expression(
             else:
                 c_expr = SymbolAST(value=c)
             for r in c_set:
-                q_table[r] = q_table.get(r, EmptyLanguage()) | c_expr
+                q_table[r] = q_table.get(r, EmptyLanguageAST()) | c_expr
 
     gnfa_start_state = f'(GNFA-START, {uuid4().hex})'
     table[gnfa_start_state] = {
@@ -62,9 +62,11 @@ def NFA_to_regular_expression(
                 leaving_to_receiver = leaving_map.get(receiver, None)
                 if not leaving_to_receiver:
                     continue
-                leaving_self_loop = leaving_map.get(leaving, EmptyLanguage())
+                leaving_self_loop = leaving_map.get(
+                    leaving, EmptyLanguageAST())
                 loop = ~leaving_self_loop
-                sender_to_receiver = sender_map.get(receiver, EmptyLanguage())
+                sender_to_receiver = sender_map.get(
+                    receiver, EmptyLanguageAST())
                 sender_map[receiver] = sender_to_receiver | (
                     sender_to_leaving +
                     loop +
@@ -76,8 +78,8 @@ def NFA_to_regular_expression(
                 del q_map[leaving]
             except KeyError:
                 pass
-    re = table[gnfa_start_state].get(gnfa_accept_state, EmptyLanguage())
-    if isinstance(re, EmptyLanguage):
+    re = table[gnfa_start_state].get(gnfa_accept_state, EmptyLanguageAST())
+    if isinstance(re, EmptyLanguageAST):
         print('This NFA has empty language')
     return RegularExpression.from_AST(re)
 
