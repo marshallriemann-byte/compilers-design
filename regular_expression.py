@@ -184,7 +184,7 @@ class GroupAST(RegularExpressionAST):
         return f'({str(self.inner_expr)})'
 
 
-class EmptyLanguage(RegularExpressionAST):
+class EmptyLanguageAST(RegularExpressionAST):
     @override
     def to_NFA(self) -> NFA:
         return NFA(
@@ -206,10 +206,10 @@ class EmptyLanguage(RegularExpressionAST):
 
 def union(a: RegularExpressionAST, b: RegularExpressionAST) -> RegularExpressionAST:
     match (a, b):
-        case (EmptyLanguage(), other):
+        case (EmptyLanguageAST(), other):
             # ∅ U R = R
             return other
-        case (other, EmptyLanguage()):
+        case (other, EmptyLanguageAST()):
             # R U ∅ = R
             return other
         case (UnionAST(alternatives=alts1), UnionAST(alternatives=alts2)):
@@ -224,9 +224,9 @@ def union(a: RegularExpressionAST, b: RegularExpressionAST) -> RegularExpression
 
 def concatenate(a: RegularExpressionAST, b: RegularExpressionAST) -> RegularExpressionAST:
     match (a, b):
-        case (EmptyLanguage(), _) | (_, EmptyLanguage()):
+        case (EmptyLanguageAST(), _) | (_, EmptyLanguageAST()):
             # R ∅ = ∅ R = ∅
-            return EmptyLanguage()
+            return EmptyLanguageAST()
         case (EmptyStringAST(), x) | (x, EmptyStringAST()):
             # R ε = ε R = R
             return x
@@ -242,7 +242,7 @@ def concatenate(a: RegularExpressionAST, b: RegularExpressionAST) -> RegularExpr
 
 def kleene_star(x: RegularExpressionAST) -> RegularExpressionAST:
     match x:
-        case EmptyLanguage() | EmptyStringAST():
+        case EmptyLanguageAST() | EmptyStringAST():
             # ∅* = ε, ε* = ε
             return EmptyStringAST()
         case StarAST():
