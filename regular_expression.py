@@ -75,7 +75,7 @@ class UnionAST(RegularExpressionAST):
         return '|'.join([str(re) for re in self.alternatives])
 
 
-class Concatenation(RegularExpressionAST):
+class ConcatenationAST(RegularExpressionAST):
     def __init__(self, sequence: Sequence[RegularExpressionAST]):
         self.sequence: list[RegularExpressionAST] = list(sequence)
 
@@ -114,7 +114,7 @@ class Star(RegularExpressionAST):
     @override
     def __str__(self) -> str:
         match self.inner_expr:
-            case UnionAST() | Concatenation():
+            case UnionAST() | ConcatenationAST():
                 return f'({str(self.inner_expr)})*'
             case _:
                 return f'{str(self.inner_expr)}*'
@@ -230,14 +230,14 @@ def concatenate(a: RegularExpressionAST, b: RegularExpressionAST) -> RegularExpr
         case (EmptyStringExpression(), x) | (x, EmptyStringExpression()):
             # R ε = ε R = R
             return x
-        case (Concatenation(sequence=seq1), Concatenation(sequence=seq2)):
-            return Concatenation(sequence=[*seq1, *seq2])
-        case (Concatenation(sequence=seq1), other):
-            return Concatenation(sequence=[*seq1, other])
-        case (other, Concatenation(sequence=seq1)):
-            return Concatenation(sequence=[other, *seq1])
+        case (ConcatenationAST(sequence=seq1), ConcatenationAST(sequence=seq2)):
+            return ConcatenationAST(sequence=[*seq1, *seq2])
+        case (ConcatenationAST(sequence=seq1), other):
+            return ConcatenationAST(sequence=[*seq1, other])
+        case (other, ConcatenationAST(sequence=seq1)):
+            return ConcatenationAST(sequence=[other, *seq1])
         case (x, y):
-            return Concatenation(sequence=[x, y])
+            return ConcatenationAST(sequence=[x, y])
 
 
 def kleene_star(x: RegularExpressionAST) -> RegularExpressionAST:
@@ -416,7 +416,7 @@ class RegularExpressionParser:
                 if len(sequence) == 1:
                     parsed_expression = sequence.pop()
                 else:
-                    parsed_expression = Concatenation(sequence)
+                    parsed_expression = ConcatenationAST(sequence)
             else:
                 parsed_expression = None
         return ParseResult(parsed_expression, error)
