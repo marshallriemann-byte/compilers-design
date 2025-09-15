@@ -2,7 +2,7 @@ from nfa import NFA, State, EMPTY_STRING_TRANSITION
 from regular_expression import RegularExpression
 from regular_expression import EmptyStringAST
 from regular_expression import EmptyLanguage
-from regular_expression import SymbolExpression
+from regular_expression import SymbolAST
 from uuid import uuid4
 from collections.abc import Sequence
 from itertools import permutations
@@ -29,7 +29,7 @@ def NFA_to_regular_expression(
             if c == EMPTY_STRING_TRANSITION:
                 c_expr = EmptyStringAST()
             else:
-                c_expr = SymbolExpression(value=c)
+                c_expr = SymbolAST(value=c)
             for r in c_set:
                 q_table[r] = q_table.get(r, EmptyLanguage()) | c_expr
 

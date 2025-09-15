@@ -140,7 +140,7 @@ class EmptyStringAST(RegularExpressionAST):
         return EMPTY_STRING_CHAR
 
 
-class SymbolExpression(RegularExpressionAST):
+class SymbolAST(RegularExpressionAST):
     def __init__(self, value: Symbol):
         self.value: Symbol = value
 
@@ -453,7 +453,7 @@ class RegularExpressionParser:
                 symbol_value = self.current.value
                 self.generate_next_token()  # Consume (
                 return ParseResult(
-                    parsed_expression=SymbolExpression(
+                    parsed_expression=SymbolAST(
                         value=symbol_value
                     ),
                     error=None
