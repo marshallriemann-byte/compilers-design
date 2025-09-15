@@ -100,24 +100,24 @@ class Concatenation(RegularExpressionAST):
 
 
 class Star(RegularExpressionAST):
-    def __init__(self, expr: RegularExpressionAST):
-        self.expr: RegularExpressionAST = expr
+    def __init__(self, inner_expr: RegularExpressionAST):
+        self.inner_expr: RegularExpressionAST = inner_expr
 
     @override
     def to_NFA(self) -> NFA:
-        return NFA.kleene_star(self.expr.to_NFA())
+        return NFA.kleene_star(self.inner_expr.to_NFA())
 
     @override
     def __repr__(self) -> str:
-        return f'Star({repr(self.expr)})'
+        return f'Star({repr(self.inner_expr)})'
 
     @override
     def __str__(self) -> str:
-        match self.expr:
+        match self.inner_expr:
             case UnionExpression() | Concatenation():
-                return f'({str(self.expr)})*'
+                return f'({str(self.inner_expr)})*'
             case _:
-                return f'{str(self.expr)}*'
+                return f'{str(self.inner_expr)}*'
 
 
 class EmptyStringExpression(RegularExpressionAST):
@@ -168,20 +168,20 @@ class SymbolExpression(RegularExpressionAST):
 
 
 class Group(RegularExpressionAST):
-    def __init__(self, grouped_expr: RegularExpressionAST):
-        self.grouped_expr: RegularExpressionAST = grouped_expr
+    def __init__(self, inner_expr: RegularExpressionAST):
+        self.inner_expr: RegularExpressionAST = inner_expr
 
     @override
     def to_NFA(self) -> NFA:
-        return self.grouped_expr.to_NFA()
+        return self.inner_expr.to_NFA()
 
     @override
     def __repr__(self) -> str:
-        return f'Group({repr(self.grouped_expr)})'
+        return f'Group({repr(self.inner_expr)})'
 
     @override
     def __str__(self) -> str:
-        return f'({str(self.grouped_expr)})'
+        return f'({str(self.inner_expr)})'
 
 
 class EmptyLanguage(RegularExpressionAST):
@@ -245,7 +245,7 @@ def kleene_star(x: RegularExpressionAST) -> RegularExpressionAST:
         case EmptyLanguage() | EmptyStringExpression():
             # ∅* = ε, ε* = ε
             return EmptyStringExpression()
-        case Star(expr=_):
+        case Star():
             # x = R* => x* = (R*)* = R*
             return x
         case expr:
@@ -432,7 +432,7 @@ class RegularExpressionParser:
                 if not isinstance(parsed_expression, Star):
                     # Star parsed expression only it's not already a star
                     parsed_expression = Star(
-                        expr=parsed_expression
+                        inner_expr=parsed_expression
                     )
         else:
             parsed_expression = None
@@ -480,7 +480,7 @@ class RegularExpressionParser:
                 if not isinstance(parsed_expression, Group):
                     # Group an expression only it's not already a group
                     parsed_expression = Group(
-                        grouped_expr=parsed_expression
+                        inner_expr=parsed_expression
                     )
             else:
                 # Expected ) after expression
