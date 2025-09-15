@@ -363,23 +363,30 @@ class RegularExpressionParser:
         if self.current:
             result = self.parse_expression()
             error, parsed_expression = result.error, result.parsed_expression
-            if parsed_expression:
-                if self.current:
-                    error = f'Error in position {self.pos}\n'
+            if error:
+                # Syntax error
+                raise ValueError(error)
+            elif parsed_expression:
+                if error:
+                    raise Exception(
+                        "\nError & parsed expression\n" +
+                        f"error: {error}\n" +
+                        f"parsed expression: {parsed_expression}\n"
+                    )
+                elif self.current:
+                    error = f'\nError in position {self.current.pos}\n'
                     error += 'Unexpected item\n'
                     error += f'{self.pattern}\n'
                     error += ' ' * self.current.pos + '^'
                     raise ValueError(error)
-                elif error:
-                    raise Exception(
-                        "Error & parsed expression\n" +
-                        f"error: {error}\n" +
-                        f"parsed expression: {parsed_expression}\n"
-                    )
                 else:
                     # parsing successful, no erorrs
                     return parsed_expression
-            elif error:
+            elif self.current:
+                error = f'\nError in position {self.current.pos}\n'
+                error += 'Unexpected item\n'
+                error += f'{self.pattern}\n'
+                error += ' ' * self.current.pos + '^'
                 raise ValueError(error)
         # Empty string pattern
         return EmptyStringAST()
@@ -409,10 +416,10 @@ class RegularExpressionParser:
                 else:
                     # Expected expression after |
                     parsed_expression = None
-                    error = f'Error in position {self.pos}\n'
+                    error = f'\nError in position {self.current.pos}\n'
                     error += 'Expected expression after |\n'
                     error += f'{self.pattern}\n'
-                    error += ' ' * self.pos + '^'
+                    error += ' ' * self.current.pos + '^'
             if not error:
                 if len(alternatives) == 1:
                     parsed_expression = alternatives.pop()
@@ -520,17 +527,17 @@ class RegularExpressionParser:
             else:
                 # Expected ) after expression
                 parsed_expression = None
-                error = f'Error in position {self.pos}\n'
+                error = f'\nError in position {self.current.pos}\n'
                 error += 'Expected ) after expression\n'
                 error += f'{self.pattern}\n'
-                error += ' ' * self.pos + '^'
+                error += ' ' * self.current.pos + '^'
         else:
             # Expected expression after (
             parsed_expression = None
-            error = f'Error in position {self.pos}\n'
+            error = f'\nError in position {self.current.pos}\n'
             error += 'Expected expression after (\n'
             error += f'{self.pattern}\n'
-            error += ' ' * self.pos + '^'
+            error += ' ' * self.current.pos + '^'
         return ParseResult(parsed_expression, error)
 
 
