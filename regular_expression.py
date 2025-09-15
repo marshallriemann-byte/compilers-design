@@ -99,7 +99,7 @@ class ConcatenationAST(RegularExpressionAST):
         ])
 
 
-class Star(RegularExpressionAST):
+class StarAST(RegularExpressionAST):
     def __init__(self, inner_expr: RegularExpressionAST):
         self.inner_expr: RegularExpressionAST = inner_expr
 
@@ -245,11 +245,11 @@ def kleene_star(x: RegularExpressionAST) -> RegularExpressionAST:
         case EmptyLanguage() | EmptyStringExpression():
             # ∅* = ε, ε* = ε
             return EmptyStringExpression()
-        case Star():
+        case StarAST():
             # x = R* => x* = (R*)* = R*
             return x
         case expr:
-            return Star(expr)
+            return StarAST(expr)
 
 
 # Regular expressions context free grammar
@@ -429,9 +429,9 @@ class RegularExpressionParser:
             parsed_expression = primary.parsed_expression
             while self.check_current_type(TokenType.KLEENE_STAR):
                 self.generate_next_token()  # Consume *
-                if not isinstance(parsed_expression, Star):
+                if not isinstance(parsed_expression, StarAST):
                     # Star parsed expression only it's not already a star
-                    parsed_expression = Star(
+                    parsed_expression = StarAST(
                         inner_expr=parsed_expression
                     )
         else:
