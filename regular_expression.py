@@ -58,6 +58,10 @@ class UnionAST(RegularExpressionAST):
     def __init__(self, alternatives: Sequence[RegularExpressionAST]):
         self.alternatives: list[RegularExpressionAST] = list(alternatives)
 
+    def __eq__(self, other):
+        return isinstance(other, UnionAST) and\
+            set(self.alternatives) == set(other.alternatives)
+
     @override
     def to_NFA(self) -> NFA:
         return NFA.union([
@@ -78,6 +82,10 @@ class UnionAST(RegularExpressionAST):
 class ConcatenationAST(RegularExpressionAST):
     def __init__(self, sequence: Sequence[RegularExpressionAST]):
         self.sequence: list[RegularExpressionAST] = list(sequence)
+
+    def __eq__(self, other):
+        return isinstance(other, ConcatenationAST) and\
+            self.sequence == other.sequence
 
     @override
     def to_NFA(self) -> NFA:
@@ -102,6 +110,10 @@ class ConcatenationAST(RegularExpressionAST):
 class StarAST(RegularExpressionAST):
     def __init__(self, inner_expr: RegularExpressionAST):
         self.inner_expr: RegularExpressionAST = inner_expr
+
+    def __eq__(self, other):
+        return isinstance(other, StarAST) and\
+            self.inner_expr == other.inner_expr
 
     @override
     def to_NFA(self) -> NFA:
@@ -131,6 +143,9 @@ class EmptyStringAST(RegularExpressionAST):
             accept_states={'q0'},
         )
 
+    def __eq__(self, other):
+        return isinstance(other, EmptyStringAST)
+
     @override
     def __repr__(self) -> str:
         return 'EmptyStringAST()'
@@ -143,6 +158,10 @@ class EmptyStringAST(RegularExpressionAST):
 class SymbolAST(RegularExpressionAST):
     def __init__(self, value: Symbol):
         self.value: Symbol = value
+
+    def __eq__(self, other):
+        return isinstance(other, SymbolAST) and\
+            self.value == other.value
 
     @override
     def to_NFA(self) -> NFA:
@@ -171,6 +190,10 @@ class GroupAST(RegularExpressionAST):
     def __init__(self, inner_expr: RegularExpressionAST):
         self.inner_expr: RegularExpressionAST = inner_expr
 
+    def __eq__(self, other):
+        return isinstance(other, GroupAST) and\
+            self.inner_expr == other.inner_expr
+
     @override
     def to_NFA(self) -> NFA:
         return self.inner_expr.to_NFA()
@@ -185,6 +208,9 @@ class GroupAST(RegularExpressionAST):
 
 
 class EmptyLanguageAST(RegularExpressionAST):
+    def __eq__(self, other):
+        return isinstance(other, EmptyLanguageAST)
+
     @override
     def to_NFA(self) -> NFA:
         return NFA(
