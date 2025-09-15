@@ -133,7 +133,7 @@ class EmptyStringAST(RegularExpressionAST):
 
     @override
     def __repr__(self) -> str:
-        return 'EmptyStringExpression()'
+        return 'EmptyStringAST()'
 
     @override
     def __str__(self) -> str:
@@ -197,7 +197,7 @@ class EmptyLanguageAST(RegularExpressionAST):
 
     @override
     def __repr__(self) -> str:
-        return 'EmptyLanguage()'
+        return 'EmptyLanguageAST()'
 
     @override
     def __str__(self) -> str:
@@ -439,11 +439,9 @@ class RegularExpressionParser:
             parsed_expression = primary.parsed_expression
             while self.check_current_type(TokenType.KLEENE_STAR):
                 self.generate_next_token()  # Consume *
-                if not isinstance(parsed_expression, StarAST):
-                    # Star parsed expression only it's not already a star
-                    parsed_expression = StarAST(
-                        inner_expr=parsed_expression
-                    )
+                # Avoid stupid parse trees like a*********
+                # and (((((epsilon)*)*)*)*)*
+                parsed_expression = kleene_star(parsed_expression)
         else:
             parsed_expression = None
             error = primary.error
