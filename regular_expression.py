@@ -374,7 +374,12 @@ class RegularExpressionParser:
                     parsed_expression = None
                     error = right_term.error
                 elif right_term.parsed_expression:
-                    alternatives.append(right_term.parsed_expression)
+                    match right_term.parsed_expression:
+                        case GroupAST(inner_expr=UnionAST(alternatives=alts)):
+                            # Flatten unions
+                            alternatives.extend(alts)
+                        case other if other not in alternatives:
+                            alternatives.append(other)
                 else:
                     # Expected expression after |
                     parsed_expression = None
