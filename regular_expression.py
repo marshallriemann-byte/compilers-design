@@ -408,12 +408,17 @@ class RegularExpressionParser:
                     parsed_expression = None
                     error = right_term.error
                 elif right_term.parsed_expression:
-                    if not isinstance(
-                        right_term.parsed_expression,
-                        EmptyStringAST
-                    ):
-                        # Concatenate non empty string patterns only
-                        sequence.append(right_term.parsed_expression)
+                    match right_term.parsed_expression:
+                        case EmptyStringAST():
+                            # Concatenating empty string has no effect
+                            pass
+                        case GroupAST(
+                            inner_expr=ConcatenationAST(sequence=seq)
+                        ):
+                            # Flatten concatenations
+                            sequence.extend(seq)
+                        case other if other not in sequence:
+                            sequence.append(other)
                 else:
                     # No more expressions to concatenate
                     break
