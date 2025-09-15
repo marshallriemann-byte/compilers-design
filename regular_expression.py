@@ -30,7 +30,7 @@ class Token:
 
 
 # Regular expressions abtract base class
-class RegularExpression(ABC):
+class RegularExpressionAST(ABC):
     @abstractmethod
     def to_NFA(self) -> NFA:
         pass
@@ -53,9 +53,9 @@ class RegularExpression(ABC):
         return kleene_star(self)
 
 
-class UnionExpression(RegularExpression):
-    def __init__(self, alternatives: Sequence[RegularExpression]):
-        self.alternatives: list[RegularExpression] = list(alternatives)
+class UnionExpression(RegularExpressionAST):
+    def __init__(self, alternatives: Sequence[RegularExpressionAST]):
+        self.alternatives: list[RegularExpressionAST] = list(alternatives)
 
     @override
     def to_NFA(self) -> NFA:
@@ -74,9 +74,9 @@ class UnionExpression(RegularExpression):
         return '|'.join([str(re) for re in self.alternatives])
 
 
-class Concatenation(RegularExpression):
-    def __init__(self, sequence: Sequence[RegularExpression]):
-        self.sequence: list[RegularExpression] = list(sequence)
+class Concatenation(RegularExpressionAST):
+    def __init__(self, sequence: Sequence[RegularExpressionAST]):
+        self.sequence: list[RegularExpressionAST] = list(sequence)
 
     @override
     def to_NFA(self) -> NFA:
@@ -98,9 +98,9 @@ class Concatenation(RegularExpression):
         ])
 
 
-class Star(RegularExpression):
-    def __init__(self, expr: RegularExpression):
-        self.expr: RegularExpression = expr
+class Star(RegularExpressionAST):
+    def __init__(self, expr: RegularExpressionAST):
+        self.expr: RegularExpressionAST = expr
 
     @override
     def to_NFA(self) -> NFA:
@@ -119,7 +119,7 @@ class Star(RegularExpression):
                 return f'{str(self.expr)}*'
 
 
-class EmptyStringExpression(RegularExpression):
+class EmptyStringExpression(RegularExpressionAST):
     @override
     def to_NFA(self) -> NFA:
         return NFA(
@@ -139,7 +139,7 @@ class EmptyStringExpression(RegularExpression):
         return EMPTY_STRING_CHAR
 
 
-class SymbolExpression(RegularExpression):
+class SymbolExpression(RegularExpressionAST):
     def __init__(self, value: Symbol):
         self.value: Symbol = value
 
@@ -166,9 +166,9 @@ class SymbolExpression(RegularExpression):
         return self.value
 
 
-class Group(RegularExpression):
-    def __init__(self, grouped_expr: RegularExpression):
-        self.grouped_expr: RegularExpression = grouped_expr
+class Group(RegularExpressionAST):
+    def __init__(self, grouped_expr: RegularExpressionAST):
+        self.grouped_expr: RegularExpressionAST = grouped_expr
 
     @override
     def to_NFA(self) -> NFA:
@@ -183,7 +183,7 @@ class Group(RegularExpression):
         return f'({str(self.grouped_expr)})'
 
 
-class EmptyLanguage(RegularExpression):
+class EmptyLanguage(RegularExpressionAST):
     @override
     def to_NFA(self) -> NFA:
         return NFA(
@@ -203,7 +203,7 @@ class EmptyLanguage(RegularExpression):
         return 'Φ'
 
 
-def union(a: RegularExpression, b: RegularExpression) -> RegularExpression:
+def union(a: RegularExpressionAST, b: RegularExpressionAST) -> RegularExpressionAST:
     match (a, b):
         case (EmptyLanguage(), other):
             # ∅ U R = R
@@ -221,7 +221,7 @@ def union(a: RegularExpression, b: RegularExpression) -> RegularExpression:
             return UnionExpression(alternatives=[x, y])
 
 
-def concatenate(a: RegularExpression, b: RegularExpression) -> RegularExpression:
+def concatenate(a: RegularExpressionAST, b: RegularExpressionAST) -> RegularExpressionAST:
     match (a, b):
         case (EmptyLanguage(), _) | (_, EmptyLanguage()):
             # R ∅ = ∅ R = ∅
@@ -239,7 +239,7 @@ def concatenate(a: RegularExpression, b: RegularExpression) -> RegularExpression
             return Concatenation(sequence=[x, y])
 
 
-def kleene_star(x: RegularExpression) -> RegularExpression:
+def kleene_star(x: RegularExpressionAST) -> RegularExpressionAST:
     match x:
         case EmptyLanguage() | EmptyStringExpression():
             # ∅* = ε, ε* = ε
@@ -265,8 +265,8 @@ META_CHARACTERS = {EMPTY_STRING_CHAR, '*', '|', '(', ')', '\\'}
 
 
 class ParseResult:
-    def __init__(self, parsed_expression: RegularExpression, error: str):
-        self.parsed_expression: RegularExpression = parsed_expression
+    def __init__(self, parsed_expression: RegularExpressionAST, error: str):
+        self.parsed_expression: RegularExpressionAST = parsed_expression
         self.error: str = error
 
 
@@ -332,7 +332,7 @@ class RegularExpressionParser:
         self.current.pos = begin
         self.pos += 1
 
-    def parse(self) -> RegularExpression:
+    def parse(self) -> RegularExpressionAST:
         if self.current:
             result = self.parse_expression()
             error, parsed_expression = result.error, result.parsed_expression
@@ -365,7 +365,7 @@ class RegularExpressionParser:
         initial = self.parse_concatenation()
         error, parsed_expression = initial.error, initial.parsed_expression
         if parsed_expression:
-            alternatives: list[RegularExpression] = [parsed_expression]
+            alternatives: list[RegularExpressionAST] = [parsed_expression]
             while not error and self.check_current_type(TokenType.UNION_BAR):
                 self.generate_next_token()  # skip current |
                 right_term = self.parse_concatenation()
@@ -395,7 +395,7 @@ class RegularExpressionParser:
         initial = self.parse_star()
         error, parsed_expression = initial.error, initial.parsed_expression
         if parsed_expression:
-            sequence: list[RegularExpression] = [parsed_expression]
+            sequence: list[RegularExpressionAST] = [parsed_expression]
             while not error:
                 right_term = self.parse_star()
                 if right_term.error:
