@@ -54,7 +54,7 @@ class RegularExpressionAST(ABC):
         return kleene_star(self)
 
 
-class UnionExpression(RegularExpressionAST):
+class UnionAST(RegularExpressionAST):
     def __init__(self, alternatives: Sequence[RegularExpressionAST]):
         self.alternatives: list[RegularExpressionAST] = list(alternatives)
 
@@ -94,7 +94,7 @@ class Concatenation(RegularExpressionAST):
     @override
     def __str__(self) -> str:
         return ''.join([
-            f'({str(re)})' if isinstance(re, UnionExpression) else str(re)
+            f'({str(re)})' if isinstance(re, UnionAST) else str(re)
             for re in self.sequence
         ])
 
@@ -114,7 +114,7 @@ class Star(RegularExpressionAST):
     @override
     def __str__(self) -> str:
         match self.inner_expr:
-            case UnionExpression() | Concatenation():
+            case UnionAST() | Concatenation():
                 return f'({str(self.inner_expr)})*'
             case _:
                 return f'{str(self.inner_expr)}*'
@@ -212,14 +212,14 @@ def union(a: RegularExpressionAST, b: RegularExpressionAST) -> RegularExpression
         case (other, EmptyLanguage()):
             # R U ∅ = R
             return other
-        case (UnionExpression(alternatives=alts1), UnionExpression(alternatives=alts2)):
-            return UnionExpression(alternatives=[*alts1, *alts2])
-        case (UnionExpression(alternatives=alts1), other):
-            return UnionExpression(alternatives=[*alts1, other])
-        case (other, UnionExpression(alternatives=alts1)):
-            return UnionExpression(alternatives=[other, *alts1])
+        case (UnionAST(alternatives=alts1), UnionAST(alternatives=alts2)):
+            return UnionAST(alternatives=[*alts1, *alts2])
+        case (UnionAST(alternatives=alts1), other):
+            return UnionAST(alternatives=[*alts1, other])
+        case (other, UnionAST(alternatives=alts1)):
+            return UnionAST(alternatives=[other, *alts1])
         case (x, y):
-            return UnionExpression(alternatives=[x, y])
+            return UnionAST(alternatives=[x, y])
 
 
 def concatenate(a: RegularExpressionAST, b: RegularExpressionAST) -> RegularExpressionAST:
@@ -386,7 +386,7 @@ class RegularExpressionParser:
                 if len(alternatives) == 1:
                     parsed_expression = alternatives.pop()
                 else:
-                    parsed_expression = UnionExpression(alternatives)
+                    parsed_expression = UnionAST(alternatives)
             else:
                 parsed_expression = None
         return ParseResult(parsed_expression, error)
