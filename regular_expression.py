@@ -477,9 +477,11 @@ class RegularExpressionParser:
         elif parsed_expression:
             if self.check_current_type(TokenType.RIGHT_PARENTHESIS):
                 self.generate_next_token()  # Consume )
-                parsed_expression = Group(
-                    grouped_expr=parsed_expression
-                )
+                if not isinstance(parsed_expression, Group):
+                    # Group an expression only it's not already a group
+                    parsed_expression = Group(
+                        grouped_expr=parsed_expression
+                    )
             else:
                 # Expected ) after expression
                 parsed_expression = None
