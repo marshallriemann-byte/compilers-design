@@ -403,7 +403,12 @@ class RegularExpressionParser:
                     parsed_expression = None
                     error = right_term.error
                 elif right_term.parsed_expression:
-                    sequence.append(right_term.parsed_expression)
+                    if not isinstance(
+                        right_term.parsed_expression,
+                        EmptyStringExpression
+                    ):
+                        # Concatenate non empty string patterns only
+                        sequence.append(right_term.parsed_expression)
                 else:
                     # No more expressions to concatenate
                     break
