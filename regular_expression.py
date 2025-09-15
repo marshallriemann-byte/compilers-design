@@ -485,3 +485,11 @@ class RegularExpressionParser:
             error += f'{self.pattern}\n'
             error += ' ' * self.pos + '^'
         return ParseResult(parsed_expression, error)
+
+
+class RegularExpression:
+    def __init__(self, pattern: str):
+        self.pattern: str = pattern
+        self.ast: RegularExpressionAST =\
+            RegularExpressionParser(pattern).parse()
+        self.nfa: NFA = self.ast.to_NFA()
