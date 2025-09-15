@@ -155,7 +155,7 @@ N7 = NFA(
         }
     },
     start_state='0',
-    accept_states={'2'}
+    accept_states={'0', '2'}
 )
 
 N8 = NFA(
