@@ -3,11 +3,6 @@ from regular_expression import RegularExpression
 from regular_expression import EmptyStringExpression
 from regular_expression import EmptyLanguage
 from regular_expression import SymbolExpression
-from regular_expression import UnionExpression
-from regular_expression import Star
-from regular_expression import Concatenation
-from regular_expression import Group
-from copy import deepcopy
 from uuid import uuid4
 from collections.abc import Sequence
 from itertools import permutations
