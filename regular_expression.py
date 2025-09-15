@@ -5,6 +5,7 @@ from enum import Enum
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from typing import override, Self
+from copy import deepcopy
 
 
 class TokenType(Enum):
@@ -488,11 +489,27 @@ class RegularExpressionParser:
 
 
 class RegularExpression:
-    def __init__(self, pattern: str):
+    def __init__(self, pattern: str = None):
         self.pattern: str = pattern
-        self.ast: RegularExpressionAST =\
-            RegularExpressionParser(pattern).parse()
-        self.nfa: NFA = self.ast.to_NFA()
+
+        if self.pattern:
+            self.ast: RegularExpressionAST =\
+                RegularExpressionParser(pattern).parse()
+        else:
+            self.ast: RegularExpressionAST = None
+
+        if self.pattern:
+            self.nfa: NFA = self.ast.to_NFA()
+        else:
+            self.nfa: NFA = None
+
+    @staticmethod
+    def from_AST(ast: RegularExpressionAST) -> Self:
+        re = RegularExpression(None)
+        re.pattern = str(ast)
+        re.ast = deepcopy(ast)
+        re.nfa = re.ast.to_NFA()
+        return re
 
     def __repr__(self) -> str:
         return f"RegularExpression(pattern='{self.pattern}')"

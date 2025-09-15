@@ -1,6 +1,5 @@
 from nfa import NFA, State, EMPTY_STRING_TRANSITION
 from regular_expression import RegularExpression
-from regular_expression import RegularExpressionParser
 from regular_expression import EmptyStringExpression
 from regular_expression import EmptyLanguage
 from regular_expression import SymbolExpression
@@ -12,14 +11,6 @@ from copy import deepcopy
 from uuid import uuid4
 from collections.abc import Sequence
 from itertools import permutations
-
-
-def to_regular_expression_object(pattern: str) -> RegularExpression:
-    return RegularExpressionParser(pattern).parse()
-
-
-def regular_expression_to_NFA(pattern: str) -> NFA:
-    return RegularExpressionParser(pattern).parse().to_NFA()
 
 
 def NFA_to_regular_expression(
@@ -93,7 +84,7 @@ def NFA_to_regular_expression(
     re = table[gnfa_start_state].get(gnfa_accept_state, EmptyLanguage())
     if isinstance(re, EmptyLanguage):
         print('This NFA has empty language')
-    return re
+    return RegularExpression.from_AST(re)
 
 
 def get_all_regular_expressions(nfa: NFA) -> list[RegularExpression]:
