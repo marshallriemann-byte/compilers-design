@@ -423,9 +423,7 @@ class RegularExpressionParser:
             parsed_expression = primary.parsed_expression
             while self.check_current_type(TokenType.KLEENE_STAR):
                 self.generate_next_token()  # Consume *
-                parsed_expression = Star(
-                    expr=parsed_expression
-                )
+                parsed_expression = kleene_star(parsed_expression)
         else:
             parsed_expression = None
             error = primary.error
