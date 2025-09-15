@@ -493,3 +493,11 @@ class RegularExpression:
         self.ast: RegularExpressionAST =\
             RegularExpressionParser(pattern).parse()
         self.nfa: NFA = self.ast.to_NFA()
+
+    def __repr__(self) -> str:
+        return f"RegularExpression(pattern='{self.pattern}')"
+
+    def __str__(self) -> str:
+        pattern = f"pattern='{self.pattern}'"
+        ast = f"ast='{str(self.ast)}'"
+        return f'RE({pattern}, {ast})'
