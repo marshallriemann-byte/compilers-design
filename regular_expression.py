@@ -489,7 +489,7 @@ class RegularExpressionParser:
 
 
 class RegularExpression:
-    def __init__(self, pattern: str = None):
+    def __init__(self, pattern: str = None, optimize_automaton=False):
         self.pattern: str = pattern
 
         if self.pattern:
@@ -500,6 +500,9 @@ class RegularExpression:
 
         if self.pattern:
             self.nfa: NFA = self.ast.to_NFA()
+            if optimize_automaton:
+                self.nfa = self.nfa.compute_minimized_DFA()
+                self.nfa.rename_states()
         else:
             self.nfa: NFA = None
 
