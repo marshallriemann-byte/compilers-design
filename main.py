@@ -13,12 +13,12 @@ def NFA_to_regular_expression(
         removal_sequence: Sequence[State] = None
 ) -> RegularExpression:
     if not removal_sequence:
-        removal_sequence = list(nfa.states)
+        removal_sequence = list(sorted(nfa.states))
 
     if nfa.states != set(removal_sequence):
         raise ValueError(
-            f'Incomplete removal sequence, missing {
-                nfa.states - set(removal_sequence)}'
+            'Incomplete removal sequence, missing ' +
+            f'{nfa.states - set(removal_sequence)}'
         )
 
     # GNFA construction
