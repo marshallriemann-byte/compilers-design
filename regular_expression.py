@@ -450,7 +450,7 @@ class RegularExpressionParser:
                         ):
                             # Flatten concatenations
                             sequence.extend(seq)
-                        case other if other not in sequence:
+                        case other:
                             sequence.append(other)
                 else:
                     # No more expressions to concatenate
