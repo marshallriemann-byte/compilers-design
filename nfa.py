@@ -44,11 +44,15 @@ class NFA:
         is_deterministic = True
         for (q, q_map) in self.transition_function.items():
             self.states.add(q)
-            scanned_symbols = 0
+            state_transitions = len(q_map)
+            if EMPTY_STRING_TRANSITION in q_map:
+                state_transitions -= 1
+            if state_transitions < len(self.alphabet):
+                # This state does not have transitions for all symbols
+                is_deterministic = False
             for (symbol, symbol_set) in q_map.items():
                 if symbol != EMPTY_STRING_TRANSITION:
                     self.alphabet.add(symbol)
-                    scanned_symbols += 1
                     if len(symbol_set) > 1:
                         # This symbol leads to multiple states
                         is_deterministic = False
@@ -56,13 +60,13 @@ class NFA:
                     # This state has at least one empty string transition
                     is_deterministic = False
                 self.states.update(symbol_set)
-            if scanned_symbols < len(self.alphabet):
-                # This state does not have transitions for all symbols
-                is_deterministic = False
         self.start_state = start_state
         self.states.add(self.start_state)
         self.accept_states = set(accept_states)
         self.states.update(self.accept_states)
+        if len(self.transition_function) < len(self.states):
+            # This NFA does not have transitions for all states
+            is_deterministic = False
         # self._automaton_type is written once
         # you can not mutate it never again
         if is_deterministic:
