@@ -582,10 +582,9 @@ class RegularExpression:
             self.optimized = True
 
     def __repr__(self) -> str:
-        return (
-            f"RegularExpression(pattern={self.pattern}, " +
-            f"optimize_automaton={self.optimized})"
-        )
+        pattern = f"pattern='{self.pattern}'"
+        optimize = f"optimize_automaton='{str(self.optimized)}'"
+        return f'RegularExpression({pattern}, {optimize})'
 
     def __str__(self) -> str:
         pattern = f"pattern='{self.pattern}'"
