@@ -79,7 +79,7 @@ def NFA_to_regular_expression(
             except KeyError:
                 pass
     re = table[gnfa_start_state].get(gnfa_accept_state, EmptyLanguageAST())
-    if isinstance(re, EmptyLanguageAST):
+    if type(re) is EmptyLanguageAST:
         print('This NFA has empty language')
     return RegularExpression.from_AST(re)
 

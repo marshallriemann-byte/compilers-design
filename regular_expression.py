@@ -59,8 +59,11 @@ class UnionAST(RegularExpressionAST):
         self.alternatives: list[RegularExpressionAST] = list(alternatives)
 
     def __eq__(self, other):
-        return isinstance(other, UnionAST) and\
-            set(self.alternatives) == set(other.alternatives)
+        match other:
+            case UnionAST(alternatives=alts):
+                return self.alternatives == alts
+            case _:
+                return False
 
     @override
     def to_NFA(self) -> NFA:
@@ -84,8 +87,11 @@ class ConcatenationAST(RegularExpressionAST):
         self.sequence: list[RegularExpressionAST] = list(sequence)
 
     def __eq__(self, other):
-        return isinstance(other, ConcatenationAST) and\
-            self.sequence == other.sequence
+        match other:
+            case ConcatenationAST(sequence=seq):
+                return self.sequence == seq
+            case _:
+                return False
 
     @override
     def to_NFA(self) -> NFA:
@@ -102,7 +108,7 @@ class ConcatenationAST(RegularExpressionAST):
     @override
     def __str__(self) -> str:
         return ''.join([
-            f'({str(re)})' if isinstance(re, UnionAST) else str(re)
+            f'({str(re)})' if type(re) is UnionAST else str(re)
             for re in self.sequence
         ])
 
@@ -112,8 +118,11 @@ class StarAST(RegularExpressionAST):
         self.inner_expr: RegularExpressionAST = inner_expr
 
     def __eq__(self, other):
-        return isinstance(other, StarAST) and\
-            self.inner_expr == other.inner_expr
+        match other:
+            case StarAST(inner_expr=expr):
+                return self.inner_expr == expr
+            case _:
+                return False
 
     @override
     def to_NFA(self) -> NFA:
@@ -144,7 +153,7 @@ class EmptyStringAST(RegularExpressionAST):
         )
 
     def __eq__(self, other):
-        return isinstance(other, EmptyStringAST)
+        return type(other) is EmptyStringAST
 
     @override
     def __repr__(self) -> str:
@@ -160,8 +169,11 @@ class SymbolAST(RegularExpressionAST):
         self.value: Symbol = value
 
     def __eq__(self, other):
-        return isinstance(other, SymbolAST) and\
-            self.value == other.value
+        match other:
+            case SymbolAST(value=char):
+                return self.value == char
+            case _:
+                return False
 
     @override
     def to_NFA(self) -> NFA:
@@ -191,8 +203,11 @@ class GroupAST(RegularExpressionAST):
         self.inner_expr: RegularExpressionAST = inner_expr
 
     def __eq__(self, other):
-        return isinstance(other, GroupAST) and\
-            self.inner_expr == other.inner_expr
+        match other:
+            case GroupAST(inner_expr=expr):
+                return self.inner_expr == expr
+            case _:
+                return False
 
     @override
     def to_NFA(self) -> NFA:
@@ -209,7 +224,7 @@ class GroupAST(RegularExpressionAST):
 
 class EmptyLanguageAST(RegularExpressionAST):
     def __eq__(self, other):
-        return isinstance(other, EmptyLanguageAST)
+        return type(other) is EmptyLanguageAST
 
     @override
     def to_NFA(self) -> NFA:
@@ -546,8 +561,9 @@ class RegularExpression:
         self.pattern: str = pattern
 
         if self.pattern:
-            self.ast: RegularExpressionAST =\
+            self.ast: RegularExpressionAST = (
                 RegularExpressionParser(pattern).parse()
+            )
         else:
             self.ast: RegularExpressionAST = None
 

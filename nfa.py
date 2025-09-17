@@ -354,8 +354,9 @@ class NFA:
         transition_function[start_state] = {
             EMPTY_STRING_TRANSITION: set()
         }
-        start_state_set: States =\
+        start_state_set: States = (
             transition_function[start_state][EMPTY_STRING_TRANSITION]
+        )
         accept_states: States = set()
         # Rename states
         for (index, nfa) in enumerate(automata):
