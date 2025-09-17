@@ -84,6 +84,19 @@ class NFA:
         # No mutation possible!
         pass
 
+    def __repr__(self):
+        if self._automaton_type == AutomatonType.DETERMINISTIC:
+            label = "DFA"
+        else:
+            label = "NFA"
+        attributes = ', '.join(
+            f'{key}={value}'
+            for (key, value) in vars(self).items()
+        )
+        return label + (
+            f'({attributes})'
+        )
+
     def read_state_map(self, state: State) -> StateMap:
         return self.transition_function.get(state, dict())
 
