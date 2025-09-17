@@ -567,13 +567,30 @@ class RegularExpression:
         else:
             self.ast: RegularExpressionAST = None
 
+        self.optimized = optimize_automaton
         if self.pattern:
             self.nfa: NFA = self.ast.to_NFA()
-            if optimize_automaton:
-                self.nfa = self.nfa.compute_minimized_DFA()
-                self.nfa.rename_states()
+            self.optimize_automaton()
         else:
             self.nfa: NFA = None
+
+    def optimize_automaton(self):
+        if not self.nfa.is_minimized and not self.optimized:
+            self.nfa = (
+                self.nfa.compute_minimized_DFA().rename_states()
+            )
+            self.optimized = True
+
+    def __repr__(self) -> str:
+        return (
+            f"RegularExpression(pattern={self.pattern}, " +
+            f"optimize_automaton={self.optimized})"
+        )
+
+    def __str__(self) -> str:
+        pattern = f"pattern='{self.pattern}'"
+        ast = f"ast='{str(self.ast)}'"
+        return f'RE({pattern}, {ast})'
 
     @staticmethod
     def from_AST(ast: RegularExpressionAST) -> Self:
@@ -582,11 +599,3 @@ class RegularExpression:
         re.ast = deepcopy(ast)
         re.nfa = re.ast.to_NFA()
         return re
-
-    def __repr__(self) -> str:
-        return f"RegularExpression(pattern='{self.pattern}')"
-
-    def __str__(self) -> str:
-        pattern = f"pattern='{self.pattern}'"
-        ast = f"ast='{str(self.ast)}'"
-        return f'RE({pattern}, {ast})'
