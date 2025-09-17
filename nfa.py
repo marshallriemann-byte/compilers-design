@@ -19,6 +19,11 @@ type TransitionFunction = dict[State, StateMap]
 EMPTY_STRING_TRANSITION = ''
 
 
+class AutomatonType(Enum):
+    NONDETERMINISTIC = 0
+    DETERMINISTIC = 1
+
+
 class ComputationResult(Enum):
     ACCEPT = 0
     REJECT = 1
@@ -36,16 +41,44 @@ class NFA:
         self.states = set(states)
         self.alphabet = set(alphabet)
         self.transition_function = deepcopy(transition_function)
+        is_deterministic = True
         for (q, q_map) in self.transition_function.items():
             self.states.add(q)
+            scanned_symbols = 0
             for (symbol, symbol_set) in q_map.items():
                 if symbol != EMPTY_STRING_TRANSITION:
                     self.alphabet.add(symbol)
+                    scanned_symbols += 1
+                    if len(symbol_set) > 1:
+                        # This symbol leads to multiple states
+                        is_deterministic = False
+                elif symbol_set:
+                    # This state has at least one empty string transition
+                    is_deterministic = False
                 self.states.update(symbol_set)
+            if scanned_symbols < len(self.alphabet):
+                # This state does not have transitions for all symbols
+                is_deterministic = False
         self.start_state = start_state
         self.states.add(self.start_state)
         self.accept_states = set(accept_states)
         self.states.update(self.accept_states)
+        # self._automaton_type is written once
+        # you can not mutate it never again
+        if is_deterministic:
+            self._automaton_type = AutomatonType.DETERMINISTIC
+        else:
+            self._automaton_type = AutomatonType.NONDETERMINISTIC
+
+    @property
+    def automaton_type(self):
+        # Okay, you can read it
+        return self._automaton_type
+
+    @automaton_type.setter
+    def automaton_type(self, new_value):
+        # No mutation possible!
+        pass
 
     def read_state_map(self, state: State) -> StateMap:
         return self.transition_function.get(state, dict())
@@ -93,6 +126,9 @@ class NFA:
                 queue.append(s + c)
 
     def compute_equivalent_DFA(self) -> Self:
+        if self._automaton_type == AutomatonType.DETERMINISTIC:
+            return deepcopy(self)
+
         names: dict[States, State] = dict()
 
         def create_name(state: States) -> State:
@@ -161,28 +197,11 @@ class NFA:
         )
 
     def compute_minimized_DFA(self):
-        is_deterministic = True
-        for q in self.states:
-            q_map = self.transition_function.get(q, dict())
-            empty_string_transition_set = q_map.get(
-                EMPTY_STRING_TRANSITION, set()
-            )
-            if not q_map or empty_string_transition_set:
-                is_deterministic = False
-                break
-            else:
-                for c in self.alphabet:
-                    c_set = q_map.get(c, set())
-                    if len(c_set) == 0 or len(c_set) > 1:
-                        is_deterministic = False
-                        break
-                if not is_deterministic:
-                    break
-
-        if is_deterministic:
-            self_nfa = self
-        else:
-            self_nfa = self.compute_equivalent_DFA()
+        match self._automaton_type:
+            case AutomatonType.NONDETERMINISTIC:
+                self_nfa = self.compute_equivalent_DFA()
+            case AutomatonType.DETERMINISTIC:
+                self_nfa = self
 
         partitions = set()
         X = frozenset(self_nfa.accept_states)
