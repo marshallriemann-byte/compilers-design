@@ -199,24 +199,24 @@ class NFA:
     def compute_minimized_DFA(self):
         match self._automaton_type:
             case AutomatonType.NONDETERMINISTIC:
-                self_nfa = self.compute_equivalent_DFA()
+                source_nfa = self.compute_equivalent_DFA()
             case AutomatonType.DETERMINISTIC:
-                self_nfa = self
+                source_nfa = self
 
         partitions = set()
-        X = frozenset(self_nfa.accept_states)
+        X = frozenset(source_nfa.accept_states)
         if X:
             partitions.add(frozenset(X))
-        Y = frozenset(self_nfa.states - self_nfa.accept_states)
+        Y = frozenset(source_nfa.states - source_nfa.accept_states)
         if Y:
             partitions.add(frozenset(Y))
         queue = set(partitions)
         while queue:
             A = queue.pop()
-            for c in self_nfa.alphabet:
+            for c in source_nfa.alphabet:
                 X = set()
-                for q in self_nfa.states:
-                    S = self_nfa.move_set({q}, c)
+                for q in source_nfa.states:
+                    S = source_nfa.move_set({q}, c)
                     if not S:
                         raise ValueError(
                             f'DFA state {q} has no trasition on symbol {c}'
@@ -248,7 +248,7 @@ class NFA:
             )
 
         states: States = set()
-        alphabet = set(self_nfa.alphabet)
+        alphabet = set(source_nfa.alphabet)
         transition_function: TransitionFunction = dict()
         accept_states: States = set()
         states_partitions_map = {
@@ -259,13 +259,13 @@ class NFA:
         for P in partitions:
             P_name = create_name(P)
             states.add(P_name)
-            if P.intersection(self_nfa.accept_states):
+            if P.intersection(source_nfa.accept_states):
                 accept_states.add(P_name)
             transition_function[P_name] = {
-                c: {states_partitions_map[self_nfa.move_set(P, c).pop()]}
+                c: {states_partitions_map[source_nfa.move_set(P, c).pop()]}
                 for c in alphabet
             }
-        start_state = states_partitions_map[self_nfa.start_state]
+        start_state = states_partitions_map[source_nfa.start_state]
         return NFA(
             states,
             alphabet,
