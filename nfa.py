@@ -73,6 +73,7 @@ class NFA:
             self._automaton_type = AutomatonType.DETERMINISTIC
         else:
             self._automaton_type = AutomatonType.NONDETERMINISTIC
+        self.is_minimized = False
 
     @property
     def automaton_type(self):
@@ -214,11 +215,12 @@ class NFA:
         )
 
     def compute_minimized_DFA(self):
-        match self._automaton_type:
-            case AutomatonType.NONDETERMINISTIC:
-                source_nfa = self.compute_equivalent_DFA()
-            case AutomatonType.DETERMINISTIC:
-                source_nfa = self
+        if self.is_minimized:
+            return deepcopy(self)
+        elif self.automaton_type == AutomatonType.NONDETERMINISTIC:
+            source_nfa = self.compute_equivalent_DFA()
+        elif self._automaton_type == AutomatonType.DETERMINISTIC:
+            source_nfa = self
 
         partitions = set()
         X = frozenset(source_nfa.accept_states)
@@ -283,13 +285,16 @@ class NFA:
                 for c in alphabet
             }
         start_state = states_partitions_map[source_nfa.start_state]
-        return NFA(
+
+        minimized_DFA = NFA(
             states,
             alphabet,
             transition_function,
             start_state,
             accept_states
         )
+        minimized_DFA.is_minimized = True
+        return minimized_DFA
 
     def rename_states(self) -> Self:
         counter = 0
