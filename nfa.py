@@ -44,12 +44,6 @@ class NFA:
         is_deterministic = True
         for (q, q_map) in self.transition_function.items():
             self.states.add(q)
-            state_transitions = len(q_map)
-            if EMPTY_STRING_TRANSITION in q_map:
-                state_transitions -= 1
-            if state_transitions < len(self.alphabet):
-                # This state does not have transitions for all symbols
-                is_deterministic = False
             for (symbol, symbol_set) in q_map.items():
                 if symbol != EMPTY_STRING_TRANSITION:
                     self.alphabet.add(symbol)
@@ -60,6 +54,15 @@ class NFA:
                     # This state has at least one empty string transition
                     is_deterministic = False
                 self.states.update(symbol_set)
+        for (_, q_map) in self.transition_function.items():
+            state_transitions = len(q_map)
+            if EMPTY_STRING_TRANSITION in q_map:
+                state_transitions -= 1
+            if state_transitions < len(self.alphabet):
+                # This state does not have transitions for all symbols
+                is_deterministic = False
+            if not is_deterministic:
+                break
         self.start_state = start_state
         self.states.add(self.start_state)
         self.accept_states = set(accept_states)
