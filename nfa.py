@@ -4,10 +4,8 @@ from enum import Enum
 from collections import deque
 from collections.abc import Sequence
 from uuid import uuid4
-from typing import Self, override
+from typing import Self
 from copy import deepcopy
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
 
 
 type Symbol = str
@@ -430,20 +428,60 @@ class NFA:
             accept_states
         )
 
+    # Quantifiers
+    # Let L = language of NFA N
     @staticmethod
-    def union_empty_string(nfa: Self) -> Self:
-        new_start_state = f'(EMPTY, {uuid4().hex})'
-        new_transition_function = deepcopy(nfa.transition_function)
-        new_transition_function[new_start_state] = {
-            EMPTY_STRING_TRANSITION: {nfa.start_state}
-        }
-        return NFA(
-            states=nfa.states.union({new_start_state}),
-            alphabet=set(nfa.alphabet),
-            transition_function=new_transition_function,
-            start_state=new_start_state,
-            accept_states=nfa.accept_states.union({new_start_state})
-        )
+    def kleene_plus(nfa: Self) -> Self:
+        # L+ = L L*
+        return NFA.concatenate([nfa, NFA.kleene_star(nfa)])
+
+    @staticmethod
+    def power(nfa: Self, exponent: int) -> Self:
+        match exponent:
+            case 0:
+                return NFA.empty_string_language_NFA()
+            case 1:
+                return nfa
+            case m:
+                result = nfa
+                for _ in range(m-1):
+                    result = NFA.concatenate([result, nfa])
+                return result
+
+    @staticmethod
+    def at_least_NFA(nfa: Self, min_count) -> Self:
+        # L{m,} = (L^m) L*
+        return NFA.concatenate([
+            NFA.power(nfa, min_count), NFA.kleene_star(nfa)
+        ])
+
+    @staticmethod
+    def at_most_NFA(nfa: Self, max_count) -> Self:
+        # L{,n} = L{0,n}
+        return NFA.union([
+            NFA.power(nfa, i)
+            for i in range(max_count+1)
+        ])
+
+    @staticmethod
+    def bounded_NFA(nfa: Self, min_count, max_count) -> Self:
+        # L{m,n}
+        result = NFA.power(nfa, min_count)
+        frontier = set(result.accept_states)
+        for i in range(max_count-min_count):
+            result = NFA.concatenate([result, nfa])
+            frontier.update(result.accept_states)
+        global_final = f'(FINAL_{uuid4().hex})'
+        for q in frontier:
+            result.transition_function.setdefault(
+                q, dict()
+            ).setdefault(
+                EMPTY_STRING_TRANSITION, set()
+            ).add(global_final)
+        result.states.add(global_final)
+        result.accept_states.add(global_final)
+        return result
+    # Quantifiers end
 
     @staticmethod
     def empty_language_NFA() -> Self:
@@ -466,26 +504,30 @@ class NFA:
         )
 
     @staticmethod
-    def power(nfa: Self, exponent: int) -> Self:
-        match exponent:
-            case 0:
-                return NFA.empty_string_language_NFA()
-            case 1:
-                return nfa
-            case m:
-                result = nfa
-                for _ in range(m-1):
-                    result = NFA.concatenate([result, nfa])
-                return result
+    def union_empty_string(nfa: Self) -> Self:
+        new_start_state = f'(EMPTY, {uuid4().hex})'
+        new_transition_function = deepcopy(nfa.transition_function)
+        new_transition_function[new_start_state] = {
+            EMPTY_STRING_TRANSITION: {nfa.start_state}
+        }
+        return NFA(
+            states=nfa.states.union({new_start_state}),
+            alphabet=set(nfa.alphabet),
+            transition_function=new_transition_function,
+            start_state=new_start_state,
+            accept_states=nfa.accept_states.union({new_start_state})
+        )
 
     @staticmethod
-    def quantify(
-        nfa: Self, min_count: int = None, max_count: int = None
-    ) -> Self:
-        if min_count is None:
-            min_count = 0
+    def __pow__(nfa: Self, exponent) -> Self:
         # L = language of NFA (nfa)
-        match (min_count, max_count):
+        match exponent:
+            case int(m):
+                # L^m
+                return NFA.power(nfa, m)
+            case (int(m), int(n)) if m == n:
+                # L^m
+                return NFA.power(nfa, m)
             case (0, 0):
                 # L{0, 0} = (L^0) = {empty string}
                 return NFA.empty_string_language_NFA()
@@ -493,46 +535,17 @@ class NFA:
                 # L{0,} = L*
                 return NFA.kleene_star(nfa)
             case (0, int(n)):
-                return NFA.union([
-                    NFA.power(nfa, i)
-                    for i in range(n+1)
-                ])
+                # L{,n} = L{0,n}
+                return NFA.at_most_NFA(nfa)
+            case (1, None):
+                # L+ = L L*
+                return NFA.kleene_plus(nfa)
             case (int(m), None):
                 # L{m,} = (L^m) L*
-                # General case of L+ = L L* = (L^1) L*
-                return NFA.concatenate([
-                    NFA.power(nfa, m), NFA.kleene_star(nfa)
-                ])
-            case (int(m), int(n)) if m == n:
-                return NFA.power(nfa, m)
+                return NFA.at_least_NFA(nfa)
             case (int(m), int(n)) if m < n:
-                result = NFA.power(nfa, m)
-                frontier = set(result.accept_states)
-                for i in range(n-m):
-                    result = NFA.concatenate([result, nfa])
-                    frontier.update(result.accept_states)
-                global_final = f'(FINAL_{uuid4().hex})'
-                for q in frontier:
-                    result.transition_function.setdefault(
-                        q, dict()
-                    ).setdefault(
-                        EMPTY_STRING_TRANSITION, set()
-                    ).add(global_final)
-                result.states.add(global_final)
-                result.accept_states.add(global_final)
-                return result
+                return NFA.bounded_NFA(m, n)
             case _:
                 raise TypeError(
-                    "Exponent must be an int or a tuple (m, n)"
-                )
-
-    def __pow__(self, exponent) -> Self:
-        match exponent:
-            case int(m):
-                return NFA.power(self, m)
-            case (m, n):
-                return NFA.quantify(self, m, n)
-            case _:
-                raise TypeError(
-                    "Exponent must be an int or a tuple (m, n)"
+                    "Exponent must be an int or a tuple (m, n) with m < n"
                 )
