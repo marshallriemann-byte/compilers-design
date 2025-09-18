@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from typing import override, Self
 from copy import deepcopy
+from dataclasses import dataclass
 
 
 class TokenType(Enum):
@@ -111,6 +112,77 @@ class ConcatenationAST(RegularExpressionAST):
             f'({str(re)})' if type(re) is UnionAST else str(re)
             for re in self.sequence
         ])
+
+
+# Quantifiers: ? * + {m} {n,m} {,m} {m,}
+class Quantifier(ABC):
+    @abstractmethod
+    def apply(self, nfa: NFA) -> NFA:
+        pass
+
+
+# Optional ? {0,1}
+class QuantifierOptional(Quantifier):
+    @override
+    def apply(self, nfa: NFA) -> NFA:
+        return NFA.union_empty_string(nfa)
+
+
+# Ordindary Kleene star * {0,}
+class QuantifierStar(Quantifier):
+    @override
+    def apply(self, nfa: NFA) -> NFA:
+        return NFA.kleene_star(nfa)
+
+
+# Kleene plus + {1,}
+class QuantifierPlus(Quantifier):
+    @override
+    def apply(self, nfa: NFA) -> NFA:
+        return NFA.kleene_plus(nfa)
+
+
+# Exact {m}
+@dataclass(init=True, repr=True, eq=True, frozen=True)
+class QuantifierExact(Quantifier):
+    exponent: int
+
+    @override
+    def apply(self, nfa: NFA) -> NFA:
+        return NFA.power(nfa, self.exponent)
+
+
+# At least {m,}
+@dataclass(init=True, repr=True, eq=True, frozen=True)
+class QuantifierAtLeast(Quantifier):
+    min_count: int
+
+    @override
+    def apply(self, nfa: NFA) -> NFA:
+        return NFA.at_least_NFA(nfa, self.min_count)
+
+
+# At most {,m}
+@dataclass(init=True, repr=True, eq=True, frozen=True)
+class QuantifierAtMost(Quantifier):
+    max_count: int
+
+    @override
+    def apply(self, nfa: NFA) -> NFA:
+        return NFA.at_most_NFA(nfa, self.max_count)
+
+
+# Bounded {m,n}
+@dataclass(init=True, repr=True, eq=True, frozen=True)
+class QuantifierBound(Quantifier):
+    min_count: int
+    max_count: int
+
+    @override
+    def apply(self, nfa: NFA) -> NFA:
+        return NFA.bounded_NFA(
+            nfa, self.min_count, self.max_count
+        )
 
 
 class QuantifiedAST(RegularExpressionAST):
