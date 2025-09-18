@@ -536,26 +536,3 @@ class NFA:
                 raise TypeError(
                     "Exponent must be an int or a tuple (m, n)"
                 )
-
-
-# Quantifiers: ? * + {m} {n,m} {,m} {m,}
-class Quantifier(ABC):
-    @abstractmethod
-    def apply(self, nfa: NFA) -> NFA:
-        pass
-
-
-# Ordindary Kleene star * {0,}
-class QuantifierStar(Quantifier):
-    @override
-    def apply(self, nfa: NFA) -> NFA:
-        return NFA.kleene_star(nfa)
-
-
-# At least one + {1,}
-class QuantifierPlus(Quantifier):
-    @override
-    def apply(self, nfa: NFA) -> NFA:
-        return NFA.concatenate([
-            nfa, NFA.kleene_star(nfa)
-        ])

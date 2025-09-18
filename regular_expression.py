@@ -587,6 +587,3 @@ class RegularExpression:
         re.ast = deepcopy(ast)
         re.nfa = re.ast.to_NFA()
         return re
-
-
-re = RegularExpression(pattern='(a|b)*cbc', optimize_automaton=True)
