@@ -573,12 +573,12 @@ class RegularExpressionParser:
 
     # Concatenation => Quantified Quantified*
     def parse_concatenation(self) -> ParseResult:
-        initial = self.parse_star()
+        initial = self.parse_quantified()
         error, parsed_expression = initial.error, initial.parsed_expression
         if parsed_expression:
             sequence: list[RegularExpressionAST] = [parsed_expression]
             while not error:
-                right_term = self.parse_star()
+                right_term = self.parse_quantified()
                 if right_term.error:
                     parsed_expression = None
                     error = right_term.error
@@ -607,7 +607,7 @@ class RegularExpressionParser:
         return ParseResult(parsed_expression, error)
 
     # Quantified => Primary ( '*' )*
-    def parse_star(self) -> ParseResult:
+    def parse_quantified(self) -> ParseResult:
         primary = self.parse_primary()
         if primary.parsed_expression:
             error = None
