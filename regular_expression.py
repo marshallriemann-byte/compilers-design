@@ -16,6 +16,7 @@ class TokenType(Enum):
     RIGHT_PARENTHESIS = 4  # )
     UNION_BAR = 5  # |
     KLEENE_STAR = 6  # *
+    KLEENE_PLUS = 7  # +
 
 
 class Token:
@@ -398,6 +399,11 @@ class RegularExpressionParser:
                 self.current = Token(
                     value='*',
                     token_type=TokenType.KLEENE_STAR,
+                )
+            case '+':
+                self.current = Token(
+                    value='+',
+                    token_type=TokenType.KLEENE_PLUS,
                 )
             case '|':
                 self.current = Token(
