@@ -441,10 +441,12 @@ class NFA:
             states=nfa.states.union({new_start_state}),
             alphabet=set(nfa.alphabet),
             transition_function=new_transition_function,
-            start_state=new_transition_function,
+            start_state=new_start_state,
             accept_states=nfa.accept_states.union({new_start_state})
         )
-    def empty_langauge_NFA() -> Self:
+
+    @staticmethod
+    def empty_language_NFA() -> Self:
         return NFA(
             states={'q0'},
             alphabet=set(),
@@ -454,7 +456,7 @@ class NFA:
         )
 
     @staticmethod
-    def empty_string_langauge_NFA() -> Self:
+    def empty_string_language_NFA() -> Self:
         return NFA(
             states={'q0'},
             alphabet=set(),
@@ -463,10 +465,11 @@ class NFA:
             accept_states={'q0'},
         )
 
+    @staticmethod
     def power(nfa: Self, exponent: int) -> Self:
         match exponent:
             case 0:
-                return NFA.empty_string_langauge_NFA()
+                return NFA.empty_string_language_NFA()
             case 1:
                 return nfa
             case m:

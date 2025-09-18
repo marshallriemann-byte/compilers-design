@@ -144,7 +144,7 @@ class QuantifiedAST(RegularExpressionAST):
 class EmptyStringAST(RegularExpressionAST):
     @override
     def to_NFA(self) -> NFA:
-        return NFA.empty_string_langauge_NFA()
+        return NFA.empty_string_language_NFA()
 
     def __eq__(self, other):
         return type(other) is EmptyStringAST
@@ -222,7 +222,7 @@ class EmptyLanguageAST(RegularExpressionAST):
 
     @override
     def to_NFA(self) -> NFA:
-        return NFA.empty_langauge_NFA()
+        return NFA.empty_language_NFA()
 
     @override
     def __repr__(self) -> str:
