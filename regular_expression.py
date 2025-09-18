@@ -20,6 +20,7 @@ class TokenType(Enum):
     MARK = 8  # ?
     LEFT_CURLY_BRACE = 9  # {
     RIGHT_CURLY_BRACE = 10  # }
+    COMMA = 11  # ,
 
 
 class Token:
@@ -385,7 +386,7 @@ def kleene_star(x: RegularExpressionAST) -> RegularExpressionAST:
 EMPTY_STRING_CHAR = '#'
 META_CHARACTERS = {
     EMPTY_STRING_CHAR, '*', '|', '(', ')', '\\',
-    '+', '?', '{', '}'
+    '+', '?', '{', '}', ','
 }
 
 
@@ -427,6 +428,11 @@ class RegularExpressionParser:
                 self.current = Token(
                     value='{',
                     token_type=TokenType.LEFT_CURLY_BRACE,
+                )
+            case ',':
+                self.current = Token(
+                    value=',',
+                    token_type=TokenType.COMMA,
                 )
             case '}':
                 self.current = Token(
