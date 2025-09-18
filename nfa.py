@@ -7,6 +7,7 @@ from uuid import uuid4
 from typing import Self, override
 from copy import deepcopy
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 
 
 type Symbol = str
@@ -448,6 +449,6 @@ class QuantifierStar(Quantifier):
 class QuantifierPlus(Quantifier):
     @override
     def apply(nfa: NFA) -> NFA:
-        return NFA.concatenate(
-            [nfa, NFA.kleene_star(nfa)]
-        )
+        return NFA.concatenate([
+            nfa, NFA.kleene_star(nfa)
+        ])
