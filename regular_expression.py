@@ -316,7 +316,9 @@ class EmptyLanguageAST(RegularExpressionAST):
         return 'Φ'
 
 
-def union(a: RegularExpressionAST, b: RegularExpressionAST) -> RegularExpressionAST:
+def union(
+    a: RegularExpressionAST, b: RegularExpressionAST
+) -> RegularExpressionAST:
     match (a, b):
         case (EmptyLanguageAST(), other):
             # ∅ U R = R
@@ -334,7 +336,9 @@ def union(a: RegularExpressionAST, b: RegularExpressionAST) -> RegularExpression
             return UnionAST(alternatives=[x, y])
 
 
-def concatenate(a: RegularExpressionAST, b: RegularExpressionAST) -> RegularExpressionAST:
+def concatenate(
+    a: RegularExpressionAST, b: RegularExpressionAST
+) -> RegularExpressionAST:
     match (a, b):
         case (EmptyLanguageAST(), _) | (_, EmptyLanguageAST()):
             # R ∅ = ∅ R = ∅
@@ -342,7 +346,10 @@ def concatenate(a: RegularExpressionAST, b: RegularExpressionAST) -> RegularExpr
         case (EmptyStringAST(), x) | (x, EmptyStringAST()):
             # R ε = ε R = R
             return x
-        case (ConcatenationAST(sequence=seq1), ConcatenationAST(sequence=seq2)):
+        case (
+            ConcatenationAST(sequence=seq1),
+            ConcatenationAST(sequence=seq2)
+        ):
             return ConcatenationAST(sequence=[*seq1, *seq2])
         case (ConcatenationAST(sequence=seq1), other):
             return ConcatenationAST(sequence=[*seq1, other])
