@@ -404,53 +404,54 @@ class RegularExpressionParser:
         self.generate_next_token()
 
     def generate_next_token(self):
-        if self.pos >= len(self.pattern):
-            self.current = None
-            return
         begin = self.pos
-        match self.pattern[self.pos]:
+        current_char = (
+            None if self.pos >= len(self.pattern)
+            else self.pattern[self.pos]
+        )
+        match current_char:
             case '*':
-                self.current = Token(
+                result = Token(
                     value='*',
                     token_type=TokenType.KLEENE_STAR,
                 )
             case '+':
-                self.current = Token(
+                result = Token(
                     value='+',
                     token_type=TokenType.KLEENE_PLUS,
                 )
             case '?':
-                self.current = Token(
+                result = Token(
                     value='?',
                     token_type=TokenType.MARK,
                 )
             case '{':
-                self.current = Token(
+                result = Token(
                     value='{',
                     token_type=TokenType.LEFT_CURLY_BRACE,
                 )
             case ',':
-                self.current = Token(
+                result = Token(
                     value=',',
                     token_type=TokenType.COMMA,
                 )
             case '}':
-                self.current = Token(
+                result = Token(
                     value='}',
                     token_type=TokenType.RIGHT_CURLY_BRACE,
                 )
             case '|':
-                self.current = Token(
+                result = Token(
                     value='|',
                     token_type=TokenType.UNION_BAR,
                 )
             case '(':
-                self.current = Token(
+                result = Token(
                     value='(',
                     token_type=TokenType.LEFT_PARENTHESIS,
                 )
             case ')':
-                self.current = Token(
+                result = Token(
                     value=')',
                     token_type=TokenType.RIGHT_PARENTHESIS,
                 )
@@ -463,7 +464,7 @@ class RegularExpressionParser:
                     else:
                         # ignore next char, emit backslash as symbol
                         char = '\\'
-                    self.current = Token(
+                    result = Token(
                         value=char,
                         token_type=TokenType.SYMBOL,
                     )
@@ -471,17 +472,21 @@ class RegularExpressionParser:
                     raise ValueError('Trailing slash at pattern end')
             case c:
                 if c == EMPTY_STRING_CHAR:
-                    self.current = Token(
+                    result = Token(
                         value=EMPTY_STRING_CHAR,
                         token_type=TokenType.EMPTY_STRING_TOKEN,
                     )
                 else:   # any other character
-                    self.current = Token(
+                    result = Token(
                         value=c,
                         token_type=TokenType.SYMBOL,
                     )
-        self.current.pos = begin
-        self.pos += 1
+            case None:
+                result = None
+        self.current = result
+        if self.current:
+            self.current.pos = begin
+            self.pos += 1
 
     def parse(self) -> RegularExpressionAST:
         if self.current:
