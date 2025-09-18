@@ -431,6 +431,19 @@ class NFA:
         )
 
     @staticmethod
+    def union_empty_string(nfa: Self) -> Self:
+        new_start_state = f'(EMPTY, {uuid4().hex})'
+        new_transition_function = deepcopy(nfa.transition_function)
+        new_transition_function[new_start_state] = {
+            EMPTY_STRING_TRANSITION: {nfa.start_state}
+        }
+        return NFA(
+            states=nfa.states.union({new_start_state}),
+            alphabet=set(nfa.alphabet),
+            transition_function=new_transition_function,
+            start_state=new_transition_function,
+            accept_states=nfa.accept_states.union({new_start_state})
+        )
     def empty_langauge_NFA() -> Self:
         return NFA(
             states={'q0'},
