@@ -450,6 +450,17 @@ class NFA:
             accept_states={'q0'},
         )
 
+    def power(nfa: Self, exponent: int) -> Self:
+        match exponent:
+            case 0:
+                return NFA.empty_string_langauge_NFA()
+            case 1:
+                return nfa
+            case m:
+                result = nfa
+                for _ in range(m-1):
+                    result = NFA.concatenate([result, nfa])
+                return result
 
 # Quantifiers: ? * + {m} {n,m} {,m} {m,}
 class Quantifier(ABC):
