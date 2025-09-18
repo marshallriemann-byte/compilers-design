@@ -127,6 +127,9 @@ class QuantifierOptional(Quantifier):
     def apply(self, nfa: NFA) -> NFA:
         return NFA.union_empty_string(nfa)
 
+    def __eq__(self, other) -> bool:
+        return type(other) is QuantifierOptional
+
 
 # Ordindary Kleene star * {0,}
 class QuantifierStar(Quantifier):
@@ -134,12 +137,18 @@ class QuantifierStar(Quantifier):
     def apply(self, nfa: NFA) -> NFA:
         return NFA.kleene_star(nfa)
 
+    def __eq__(self, other) -> bool:
+        return type(other) is QuantifierStar
+
 
 # Kleene plus + {1,}
 class QuantifierPlus(Quantifier):
     @override
     def apply(self, nfa: NFA) -> NFA:
         return NFA.kleene_plus(nfa)
+
+    def __eq__(self, other) -> bool:
+        return type(other) is QuantifierPlus
 
 
 # Exact {m}
