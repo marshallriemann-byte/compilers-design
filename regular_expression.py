@@ -126,13 +126,13 @@ class QuantifierStar(Quantifier):
         return NFA.kleene_star(nfa)
 
 
-class StarAST(RegularExpressionAST):
+class QuantifiedAST(RegularExpressionAST):
     def __init__(self, inner_expr: RegularExpressionAST):
         self.inner_expr: RegularExpressionAST = inner_expr
 
     def __eq__(self, other):
         match other:
-            case StarAST(inner_expr=expr):
+            case QuantifiedAST(inner_expr=expr):
                 return self.inner_expr == expr
             case _:
                 return False
@@ -143,7 +143,7 @@ class StarAST(RegularExpressionAST):
 
     @override
     def __repr__(self) -> str:
-        return f'Star({repr(self.inner_expr)})'
+        return f'Quantified({repr(self.inner_expr)})'
 
     @override
     def __str__(self) -> str:
@@ -299,17 +299,17 @@ def kleene_star(x: RegularExpressionAST) -> RegularExpressionAST:
         case EmptyLanguageAST() | EmptyStringAST():
             # ∅* = ε, ε* = ε
             return EmptyStringAST()
-        case StarAST():
+        case QuantifiedAST():
             # x = R* => x* = (R*)* = R*
             return x
         case expr:
-            return StarAST(expr)
+            return QuantifiedAST(expr)
 
 
 # Regular expressions context free grammar
 # Expression => Concatenation ( '|' Concatenation )*
-# Concatenation => Star Star*
-# Star => Primary ( '*' )*
+# Concatenation => Quantified Quantified*
+# Quantified => Primary ( '*' )*
 # Primary => ε | SYMBOL | Group
 # Group => ( '(' Expression ')' )
 
@@ -457,7 +457,7 @@ class RegularExpressionParser:
                 parsed_expression = None
         return ParseResult(parsed_expression, error)
 
-    # Concatenation => Star Star*
+    # Concatenation => Quantified Quantified*
     def parse_concatenation(self) -> ParseResult:
         initial = self.parse_star()
         error, parsed_expression = initial.error, initial.parsed_expression
@@ -492,7 +492,7 @@ class RegularExpressionParser:
                 parsed_expression = None
         return ParseResult(parsed_expression, error)
 
-    # Star => Primary ( '*' )*
+    # Quantified => Primary ( '*' )*
     def parse_star(self) -> ParseResult:
         primary = self.parse_primary()
         if primary.parsed_expression:
