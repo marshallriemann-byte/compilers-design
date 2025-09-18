@@ -379,9 +379,11 @@ def kleene_star(x: RegularExpressionAST) -> RegularExpressionAST:
 # Regular expressions context free grammar
 # Expression => Concatenation ( '|' Concatenation )*
 # Concatenation => Quantified Quantified*
-# Quantified => Primary ( '*' )*
+# Quantified => Primary Quantifier*
+# Quantifier => '?' | '*' | '+' | BoundedQuantifier
+# BoundedQuantifier => '{' ( NUMBER ',' | ',' NUMER | NUMBER ',' NUMBER ) '}'
 # Primary => ε | SYMBOL | Group
-# Group => ( '(' Expression ')' )
+# Group => '(' Expression ')'
 
 
 # Special character to represent empty string
