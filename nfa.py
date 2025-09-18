@@ -319,7 +319,7 @@ class NFA:
         self.accept_states = {names[q] for q in self.accept_states}
         return self
 
-    def __mul__(self, other: Self) -> Self:
+    def __add__(self, other: Self) -> Self:
         return NFA.concatenate([self, other])
 
     def __or__(self, other: Self) -> Self:
