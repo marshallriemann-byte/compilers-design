@@ -713,9 +713,7 @@ class RegularExpression:
         return f'RegularExpression({pattern}, {optimize})'
 
     def __str__(self) -> str:
-        pattern = f"pattern='{self.pattern}'"
-        ast = f"ast='{str(self.ast)}'"
-        return f'RE({pattern}, {ast})'
+        return str(self.ast)
 
     @staticmethod
     def from_AST(ast: RegularExpressionAST) -> Self:
