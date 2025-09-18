@@ -373,7 +373,7 @@ def kleene_star(x: RegularExpressionAST) -> RegularExpressionAST:
 
 # Special character to represent empty string
 EMPTY_STRING_CHAR = '#'
-META_CHARACTERS = {EMPTY_STRING_CHAR, '*', '|', '(', ')', '\\'}
+META_CHARACTERS = {EMPTY_STRING_CHAR, '*', '|', '(', ')', '\\', '+'}
 
 
 class ParseResult:
