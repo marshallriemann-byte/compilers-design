@@ -478,6 +478,61 @@ class NFA:
                     result = NFA.concatenate([result, nfa])
                 return result
 
+    @staticmethod
+    def quantify(
+        nfa: Self, min_count: int = None, max_count: int = None
+    ) -> Self:
+        if min_count is None:
+            min_count = 0
+        # L = language of NFA (nfa)
+        match (min_count, max_count):
+            case (0, 0):
+                # L{0, 0} = (L^0) = {empty string}
+                return NFA.empty_string_language_NFA()
+            case (0, None):
+                # L{0,} = L*
+                return NFA.kleene_star(nfa)
+            case (int(m), None):
+                # L{m,} = (L^m) L*
+                # General case of L+ = L L* = (L^1) L*
+                return NFA.concatenate([
+                    NFA.power(nfa, m), NFA.kleene_star(nfa)
+                ])
+            case (int(m), int(n)) if m == n:
+                return NFA.power(nfa, m)
+            case (int(m), int(n)) if m < n:
+                result = NFA.power(nfa, m)
+                frontier = set(result.accept_states)
+                for i in range(n-m):
+                    result = NFA.concatenate([result, nfa])
+                    frontier.update(result.accept_states)
+                global_final = f'(FINAL_{uuid4().hex})'
+                for q in frontier:
+                    result.transition_function.setdefault(
+                        q, dict()
+                    ).setdefault(
+                        EMPTY_STRING_TRANSITION, set()
+                    ).add(global_final)
+                result.states.add(global_final)
+                result.accept_states.add(global_final)
+                return result
+            case _:
+                raise TypeError(
+                    "Exponent must be an int or a tuple (m, n)"
+                )
+
+    def __pow__(self, exponent) -> Self:
+        match exponent:
+            case int(m):
+                return NFA.power(self, m)
+            case (m, n):
+                return NFA.quantify(self, m, n)
+            case _:
+                raise TypeError(
+                    "Exponent must be an int or a tuple (m, n)"
+                )
+
+
 # Quantifiers: ? * + {m} {n,m} {,m} {m,}
 class Quantifier(ABC):
     @abstractmethod
