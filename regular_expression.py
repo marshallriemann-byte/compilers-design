@@ -7,6 +7,7 @@ from collections.abc import Sequence
 from typing import override, Self
 from copy import deepcopy
 from dataclasses import dataclass
+from re import compile
 
 
 class TokenType(Enum):
@@ -21,6 +22,7 @@ class TokenType(Enum):
     LEFT_CURLY_BRACE = 9  # {
     RIGHT_CURLY_BRACE = 10  # }
     COMMA = 11  # ,
+    NUMBER = 12
 
 
 class Token:
@@ -388,6 +390,7 @@ META_CHARACTERS = {
     EMPTY_STRING_CHAR, '*', '|', '(', ')', '\\',
     '+', '?', '{', '}', ','
 }
+NUMBERS_PATTERN = compile(r'\d+')
 
 
 class ParseResult:
@@ -410,6 +413,16 @@ class RegularExpressionParser:
             else self.pattern[self.pos]
         )
         match current_char:
+            case c if c == EMPTY_STRING_CHAR:
+                result = Token(
+                    value=EMPTY_STRING_CHAR,
+                    token_type=TokenType.EMPTY_STRING_TOKEN,
+                )
+            case c if number := NUMBERS_PATTERN.match(self.pattern, self.pos):
+                result = Token(
+                    value=number.group(),
+                    token_type=TokenType.NUMBER,
+                )
             case '*':
                 result = Token(
                     value='*',
@@ -471,16 +484,10 @@ class RegularExpressionParser:
                 else:
                     raise ValueError('Trailing slash at pattern end')
             case c:
-                if c == EMPTY_STRING_CHAR:
-                    result = Token(
-                        value=EMPTY_STRING_CHAR,
-                        token_type=TokenType.EMPTY_STRING_TOKEN,
-                    )
-                else:   # any other character
-                    result = Token(
-                        value=c,
-                        token_type=TokenType.SYMBOL,
-                    )
+                result = Token(
+                    value=c,
+                    token_type=TokenType.SYMBOL,
+                )
             case None:
                 result = None
         self.current = result
