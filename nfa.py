@@ -444,21 +444,21 @@ class NFA:
 # Quantifiers: ? * + {m} {n,m} {,m} {m,}
 class Quantifier(ABC):
     @abstractmethod
-    def apply(nfa: NFA) -> NFA:
+    def apply(self, nfa: NFA) -> NFA:
         pass
 
 
 # Ordindary Kleene star * {0,}
 class QuantifierStar(Quantifier):
     @override
-    def apply(nfa: NFA) -> NFA:
+    def apply(self, nfa: NFA) -> NFA:
         return NFA.kleene_star(nfa)
 
 
 # At least one + {1,}
 class QuantifierPlus(Quantifier):
     @override
-    def apply(nfa: NFA) -> NFA:
+    def apply(self, nfa: NFA) -> NFA:
         return NFA.concatenate([
             nfa, NFA.kleene_star(nfa)
         ])
