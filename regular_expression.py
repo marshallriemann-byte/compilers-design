@@ -228,13 +228,7 @@ class EmptyLanguageAST(RegularExpressionAST):
 
     @override
     def to_NFA(self) -> NFA:
-        return NFA(
-            states={'q0'},
-            alphabet=set(),
-            transition_function=dict(),
-            start_state='q0',
-            accept_states=set()
-        )
+        return NFA.empty_langauge_NFA()
 
     @override
     def __repr__(self) -> str:
