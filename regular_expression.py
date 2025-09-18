@@ -113,6 +113,13 @@ class ConcatenationAST(RegularExpressionAST):
         ])
 
 
+# Quantifiers: ? * + {m} {n,m} {,m} {m,}
+class Quantifier(ABC):
+    @abstractmethod
+    def apply(nfa: NFA) -> NFA:
+        pass
+
+
 class StarAST(RegularExpressionAST):
     def __init__(self, inner_expr: RegularExpressionAST):
         self.inner_expr: RegularExpressionAST = inner_expr
