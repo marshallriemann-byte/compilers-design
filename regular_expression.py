@@ -527,8 +527,15 @@ class RegularExpressionParser:
         # Empty string pattern
         return EmptyStringAST()
 
-    def check_current_type(self, expected_type: TokenType) -> bool:
+    def check(self, expected_type: TokenType) -> bool:
         return self.current and self.current.token_type == expected_type
+
+    def consume(self, expected_type: TokenType) -> Token:
+        if self.check(expected_type):
+            current_copy = deepcopy(self.current)
+            self.generate_next_token()
+            return current_copy
+        return None
 
     # Expression => Concatenation ( '|' Concatenation )*
     def parse_expression(self) -> ParseResult:
@@ -536,8 +543,7 @@ class RegularExpressionParser:
         error, parsed_expression = initial.error, initial.parsed_expression
         if parsed_expression:
             alternatives: list[RegularExpressionAST] = [parsed_expression]
-            while not error and self.check_current_type(TokenType.UNION_BAR):
-                self.generate_next_token()  # skip current |
+            while not error and self.consume(TokenType.UNION_BAR):
                 right_term = self.parse_concatenation()
                 if right_term.error:
                     parsed_expression = None
@@ -606,8 +612,7 @@ class RegularExpressionParser:
         if primary.parsed_expression:
             error = None
             parsed_expression = primary.parsed_expression
-            while self.check_current_type(TokenType.KLEENE_STAR):
-                self.generate_next_token()  # Consume *
+            while self.consume(TokenType.KLEENE_STAR):
                 # Avoid stupid parse trees like a*********
                 # and (((((epsilon)*)*)*)*)*
                 parsed_expression = kleene_star(parsed_expression)
@@ -652,8 +657,7 @@ class RegularExpressionParser:
         if error:
             parsed_expression = None
         elif parsed_expression:
-            if self.check_current_type(TokenType.RIGHT_PARENTHESIS):
-                self.generate_next_token()  # Consume )
+            if self.consume(TokenType.RIGHT_PARENTHESIS):
                 match parsed_expression:
                     case UnionAST() | ConcatenationAST():
                         # Group only unions and concatenations
