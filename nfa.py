@@ -492,6 +492,11 @@ class NFA:
             case (0, None):
                 # L{0,} = L*
                 return NFA.kleene_star(nfa)
+            case (0, int(n)):
+                return NFA.union([
+                    NFA.power(nfa, i)
+                    for i in range(n+1)
+                ])
             case (int(m), None):
                 # L{m,} = (L^m) L*
                 # General case of L+ = L L* = (L^1) L*
