@@ -4,8 +4,9 @@ from enum import Enum
 from collections import deque
 from collections.abc import Sequence
 from uuid import uuid4
-from typing import Self
+from typing import Self, override
 from copy import deepcopy
+from abc import ABC, abstractmethod
 
 
 type Symbol = str
@@ -427,3 +428,16 @@ class NFA:
             start_state,
             accept_states
         )
+
+
+# Quantifiers: ? * + {m} {n,m} {,m} {m,}
+class Quantifier(ABC):
+    @abstractmethod
+    def apply(nfa: NFA) -> NFA:
+        pass
+
+
+class QuantifierStar(Quantifier):
+    @override
+    def apply(nfa: NFA) -> NFA:
+        return NFA.kleene_star(nfa)
