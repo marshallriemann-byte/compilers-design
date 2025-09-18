@@ -17,6 +17,7 @@ class TokenType(Enum):
     UNION_BAR = 5  # |
     KLEENE_STAR = 6  # *
     KLEENE_PLUS = 7  # +
+    MARK = 8  # ?
 
 
 class Token:
@@ -373,7 +374,7 @@ def kleene_star(x: RegularExpressionAST) -> RegularExpressionAST:
 
 # Special character to represent empty string
 EMPTY_STRING_CHAR = '#'
-META_CHARACTERS = {EMPTY_STRING_CHAR, '*', '|', '(', ')', '\\', '+'}
+META_CHARACTERS = {EMPTY_STRING_CHAR, '*', '|', '(', ')', '\\', '+', '?'}
 
 
 class ParseResult:
@@ -404,6 +405,11 @@ class RegularExpressionParser:
                 self.current = Token(
                     value='+',
                     token_type=TokenType.KLEENE_PLUS,
+                )
+            case '?':
+                self.current = Token(
+                    value='?',
+                    token_type=TokenType.MARK,
                 )
             case '|':
                 self.current = Token(
