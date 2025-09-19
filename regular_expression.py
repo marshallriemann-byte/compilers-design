@@ -159,18 +159,17 @@ class Quantifier(ABC):
     def apply_on_NFA(self, nfa: NFA) -> NFA:
         pass
 
-    def __repr__(self) -> str:
-        return self.__class__.__name__ + '()'
 
     @abstractmethod
     def __str__(self) -> str:
         pass
 
 
-# Power zero {0} or {0,0}
+# Power zero {0} {0,0} {,0}
 class QuantifierPowerZero(Quantifier):
     @override
     def apply_on_NFA(self, nfa: NFA) -> NFA:
+        # R{0} = {empty string}
         return NFA.empty_string_language_NFA()
 
     @override
@@ -244,7 +243,7 @@ class QuantifierAtLeast(Quantifier):
 
     @override
     def __str__(self) -> str:
-        return f'{{,{self.min_count}}}'
+        return f'{{{self.min_count},}}'
 
 
 # At most {,m}
@@ -262,7 +261,7 @@ class QuantifierAtMost(Quantifier):
 
     @override
     def __str__(self) -> str:
-        return f'{{{self.max_count},}}'
+        return f'{{,{self.max_count}}}'
 
 
 # Bounded {m,n}
@@ -283,7 +282,7 @@ class QuantifierBounded(Quantifier):
 
     @override
     def __str__(self) -> str:
-        return f'{{{self.min_count}, {self.max_count}}}'
+        return f'{{{self.min_count},{self.max_count}}}'
 
 
 class QuantifiedAST(RegularExpressionAST):
@@ -803,7 +802,6 @@ class RegularExpressionParser:
                 error += f'{self.pattern}\n'
                 error += ' ' * self.current.pos + '^'
                 raise ValueError(error)
-
         return result
 
     # Primary => ε | SYMBOL | ( '(' Expression ')' )
