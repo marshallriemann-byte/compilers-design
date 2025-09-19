@@ -298,7 +298,9 @@ class QuantifiedAST(RegularExpressionAST):
 
     @override
     def to_NFA(self) -> NFA:
-        return NFA.kleene_star(self.inner_expr.to_NFA())
+        return self.quantifier.apply_on_NFA(
+            self.inner_expr.to_NFA()
+        )
 
     @override
     def __repr__(self) -> str:
