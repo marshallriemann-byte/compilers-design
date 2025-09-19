@@ -252,12 +252,23 @@ class QuantifierKleeneStar(Quantifier):
     @override
     def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
         match expr:
+            case EmptyStringAST() | EmptyLanguageAST():
+                return EmptyStringAST()
             case QuantifiedAST(inner_expr=inner, quantifier=op):
                 match op:
-                    case _:
+                    case QuantifierKleeneStar():
+                        # (R*)* = R*
                         return expr
+                    case _:
+                        return QuantifiedAST(
+                            inner_expr=inner,
+                            quantifier=QuantifierKleeneStar()
+                        )
             case _:
-                return expr
+                return QuantifiedAST(
+                    inner_expr=inner,
+                    quantifier=QuantifierKleeneStar()
+                )
 
     @override
     def __str__(self) -> str:
