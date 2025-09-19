@@ -26,13 +26,33 @@ class TokenType(Enum):
 
 
 class Token:
-    def __init__(self, value: str, token_type: TokenType, pos: int = 0):
-        self.value: str = value
+    def __init__(self, token_type: TokenType, pos: int = 0):
         self.token_type: TokenType = token_type
         self.pos: int = pos
 
     def __repr__(self):
+        value = f"Token(type={self.token_type}, "
+        value += f'pos={self.pos})'
+        return value
+
+
+class SymbolToken(Token):
+    def __int__(self, value: str):
+        self.value: str = value
+
+    def __repr__(self):
         value = f"Token(value='{self.value}', "
+        value += f'type={self.token_type}, '
+        value += f'pos={self.pos})'
+        return value
+
+
+class NumberToken(Token):
+    def __int__(self, value: int):
+        self.value: int = value
+
+    def __repr__(self):
+        value = f'Token(value={self.value}, '
         value += f'type={self.token_type}, '
         value += f'pos={self.pos})'
         return value
@@ -428,30 +448,26 @@ class RegularExpressionParser:
         match current_char:
             case c if c == EMPTY_STRING_CHAR:
                 result = Token(
-                    value=EMPTY_STRING_CHAR,
                     token_type=TokenType.EMPTY_STRING_TOKEN,
                 )
             case c if (
                 number := NUMBERS_PATTERN.match(self.pattern, self.pos)
                 and self.inside_bounded_quantifier
             ):
-                result = Token(
-                    value=number.group(),
+                result = NumberToken(
+                    value=int(number.group()),
                     token_type=TokenType.NUMBER,
                 )
             case '*':
                 result = Token(
-                    value='*',
                     token_type=TokenType.KLEENE_STAR,
                 )
             case '+':
                 result = Token(
-                    value='+',
                     token_type=TokenType.KLEENE_PLUS,
                 )
             case '?':
                 result = Token(
-                    value='?',
                     token_type=TokenType.MARK,
                 )
             case '{':
@@ -461,39 +477,33 @@ class RegularExpressionParser:
                 )
                 if next_char and (next_char == ',' or next_char.isdigit()):
                     result = Token(
-                        value='{',
                         token_type=TokenType.LEFT_CURLY_BRACE,
                     )
                     self.inside_bounded_quantifier = True
                 else:
-                    result = Token(
+                    result = SymbolToken(
                         value='{',
                         token_type=TokenType.SYMBOL,
                     )
             case '}' if self.inside_bounded_quantifier:
                 result = Token(
-                    value='}',
                     token_type=TokenType.RIGHT_CURLY_BRACE,
                 )
                 self.inside_bounded_quantifier = False
             case ',' if self.inside_bounded_quantifier:
                 result = Token(
-                    value=',',
                     token_type=TokenType.COMMA,
                 )
             case '|':
                 result = Token(
-                    value='|',
                     token_type=TokenType.UNION_BAR,
                 )
             case '(':
                 result = Token(
-                    value='(',
                     token_type=TokenType.LEFT_PARENTHESIS,
                 )
             case ')':
                 result = Token(
-                    value=')',
                     token_type=TokenType.RIGHT_PARENTHESIS,
                 )
             case '\\':
@@ -505,7 +515,7 @@ class RegularExpressionParser:
                     else:
                         # ignore next char, emit backslash as symbol
                         char = '\\'
-                    result = Token(
+                    result = SymbolToken(
                         value=char,
                         token_type=TokenType.SYMBOL,
                     )
@@ -514,7 +524,7 @@ class RegularExpressionParser:
             case c:
                 if self.inside_bounded_quantifier:
                     self.inside_bounded_quantifier = False
-                result = Token(
+                result = SymbolToken(
                     value=c,
                     token_type=TokenType.SYMBOL,
                 )
