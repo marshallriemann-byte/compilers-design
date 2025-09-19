@@ -255,11 +255,16 @@ class QuantifierKleeneStar(Quantifier):
     def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
         match expr:
             case EmptyStringAST() | EmptyLanguageAST():
+                # ε* = Φ* = ε
                 return EmptyStringAST()
             case QuantifiedAST(inner_expr=inner, quantifier=op):
                 match op:
-                    case QuantifierKleeneStar():
+                    case (
+                        QuantifierKleeneStar() |
+                        QuantifierKleenePlus()
+                    ):
                         # (R*)* = R*
+                        # (R+)* = R*
                         return expr
                     case _:
                         return QuantifiedAST(
