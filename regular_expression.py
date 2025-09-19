@@ -618,7 +618,7 @@ class RegularExpressionParser:
                 parsed_expression = None
         return ParseResult(parsed_expression, error)
 
-    # Quantified => Primary ( '*' )*
+    # Quantified => Primary Quantifier*
     def parse_quantified(self) -> ParseResult:
         primary = self.parse_primary()
         if primary.parsed_expression:
@@ -632,6 +632,20 @@ class RegularExpressionParser:
             parsed_expression = None
             error = primary.error
         return ParseResult(parsed_expression, error)
+
+    # Quantifier => '?' | '*' | '+' | BoundedQuantifier
+    # BoundedQuantifier =>
+    # '{' ( NUMBER ',' | ',' NUMER | NUMBER ',' NUMBER ) '}'
+    def parse_quantifier(self) -> Quantifier:
+        if self.consume(TokenType.MARK):
+            return QuantifierOptional()
+        elif self.consume(TokenType.KLEENE_STAR):
+            return QuantifierStar()
+        elif self.consume(TokenType.KLEENE_PLUS):
+            return QuantifierPlus()
+        elif self.consume(TokenType.LEFT_CURLY_BRACE):
+            pass
+        return QuantifierNone()
 
     # Primary => ε | SYMBOL | ( '(' Expression ')' )
     def parse_primary(self) -> ParseResult:
