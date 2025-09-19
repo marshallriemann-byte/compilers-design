@@ -150,6 +150,13 @@ class Quantifier(ABC):
     def apply(self, nfa: NFA) -> NFA:
         pass
 
+    def __repr__(self) -> str:
+        return self.__class__.__name__ + '()'
+
+    @abstractmethod
+    def __str__(self) -> str:
+        pass
+
 
 # Power zero {0} or {0,0}
 class QuantifierPowerZero(Quantifier):
@@ -159,6 +166,10 @@ class QuantifierPowerZero(Quantifier):
 
     def __eq__(self, other) -> bool:
         return type(other) is QuantifierPowerZero
+
+    @override
+    def __str__(self) -> str:
+        return '{0}'
 
 
 # Optional ? {0,1}
@@ -170,6 +181,10 @@ class QuantifierOptional(Quantifier):
     def __eq__(self, other) -> bool:
         return type(other) is QuantifierOptional
 
+    @override
+    def __str__(self) -> str:
+        return '?'
+
 
 # Ordindary Kleene star * {0,}
 class QuantifierKleeneStar(Quantifier):
@@ -179,6 +194,10 @@ class QuantifierKleeneStar(Quantifier):
 
     def __eq__(self, other) -> bool:
         return type(other) is QuantifierKleeneStar
+
+    @override
+    def __str__(self) -> str:
+        return '*'
 
 
 # Kleene plus + {1,}
@@ -190,6 +209,10 @@ class QuantifierKleenePlus(Quantifier):
     def __eq__(self, other) -> bool:
         return type(other) is QuantifierKleenePlus
 
+    @override
+    def __str__(self) -> str:
+        return '+'
+
 
 # Exact {m}
 @dataclass(init=True, repr=True, eq=True, frozen=True)
@@ -199,6 +222,14 @@ class QuantifierExact(Quantifier):
     @override
     def apply(self, nfa: NFA) -> NFA:
         return NFA.power(nfa, self.exponent)
+
+    @override
+    def __repr__(self) -> str:
+        return f'QuantifierExact({self.exponent})'
+
+    @override
+    def __str__(self) -> str:
+        return f'{{{self.exponent}}}'
 
 
 # At least {m,}
@@ -210,6 +241,14 @@ class QuantifierAtLeast(Quantifier):
     def apply(self, nfa: NFA) -> NFA:
         return NFA.at_least_NFA(nfa, self.min_count)
 
+    @override
+    def __repr__(self) -> str:
+        return f'QuantifierAtLeast({self.min_count})'
+
+    @override
+    def __str__(self) -> str:
+        return f'{{,{self.min_count}}}'
+
 
 # At most {,m}
 @dataclass(init=True, repr=True, eq=True, frozen=True)
@@ -219,6 +258,14 @@ class QuantifierAtMost(Quantifier):
     @override
     def apply(self, nfa: NFA) -> NFA:
         return NFA.at_most_NFA(nfa, self.max_count)
+
+    @override
+    def __repr__(self) -> str:
+        return f'QuantifierAtMost({self.max_count})'
+
+    @override
+    def __str__(self) -> str:
+        return f'{{{self.max_count},}}'
 
 
 # Bounded {m,n}
@@ -232,6 +279,14 @@ class QuantifierBounded(Quantifier):
         return NFA.bounded_NFA(
             nfa, self.min_count, self.max_count
         )
+
+    @override
+    def __repr__(self) -> str:
+        return f'QuantifierBounded({self.min_count},{self.max_count})'
+
+    @override
+    def __str__(self) -> str:
+        return f'{{{self.min_count}, {self.max_count}}}'
 
 
 class QuantifiedAST(RegularExpressionAST):
@@ -257,9 +312,10 @@ class QuantifiedAST(RegularExpressionAST):
     def __str__(self) -> str:
         match self.inner_expr:
             case UnionAST() | ConcatenationAST():
-                return f'({str(self.inner_expr)})*'
+                value = f'({str(self.inner_expr)})*'
             case _:
-                return f'{str(self.inner_expr)}*'
+                value = f'{str(self.inner_expr)}*'
+        return f'{value}{self.quantifier}'
 
 
 class EmptyStringAST(RegularExpressionAST):
