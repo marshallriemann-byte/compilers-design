@@ -151,14 +151,14 @@ class Quantifier(ABC):
         pass
 
 
-# No quantifier
-class QuantifierNone(Quantifier):
+# Power zero {0} or {0,0}
+class QuantifierPowerZero(Quantifier):
     @override
     def apply(self, nfa: NFA) -> NFA:
-        return nfa
+        return NFA.empty_string_language_NFA()
 
     def __eq__(self, other) -> bool:
-        return type(other) is QuantifierNone
+        return type(other) is QuantifierPowerZero
 
 
 # Optional ? {0,1}
@@ -172,23 +172,23 @@ class QuantifierOptional(Quantifier):
 
 
 # Ordindary Kleene star * {0,}
-class QuantifierStar(Quantifier):
+class QuantifierKleeneStar(Quantifier):
     @override
     def apply(self, nfa: NFA) -> NFA:
         return NFA.kleene_star(nfa)
 
     def __eq__(self, other) -> bool:
-        return type(other) is QuantifierStar
+        return type(other) is QuantifierKleeneStar
 
 
 # Kleene plus + {1,}
-class QuantifierPlus(Quantifier):
+class QuantifierKleenePlus(Quantifier):
     @override
     def apply(self, nfa: NFA) -> NFA:
         return NFA.kleene_plus(nfa)
 
     def __eq__(self, other) -> bool:
-        return type(other) is QuantifierPlus
+        return type(other) is QuantifierKleenePlus
 
 
 # Exact {m}
@@ -223,7 +223,7 @@ class QuantifierAtMost(Quantifier):
 
 # Bounded {m,n}
 @dataclass(init=True, repr=True, eq=True, frozen=True)
-class QuantifierBound(Quantifier):
+class QuantifierBounded(Quantifier):
     min_count: int
     max_count: int
 
@@ -426,6 +426,10 @@ META_CHARACTERS = {
     '+', '?', '{', '}', ','
 }
 NUMBERS_PATTERN = compile(r'\d+')
+QUANTIFIERS_CHARS = {
+    # Characters allowed between { and }
+    ',', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+}
 
 
 class ParseResult:
@@ -478,7 +482,7 @@ class RegularExpressionParser:
                     None if self.pos >= len(self.pattern)
                     else self.pattern[self.pos]
                 )
-                if next_char and (next_char == ',' or next_char.isdigit()):
+                if next_char in QUANTIFIERS_CHARS:
                     result = BasicToken(
                         token_type=TokenType.LEFT_CURLY_BRACE,
                     )
@@ -669,14 +673,83 @@ class RegularExpressionParser:
     # '{' ( NUMBER ',' | ',' NUMER | NUMBER ',' NUMBER ) '}'
     def parse_quantifier(self) -> Quantifier:
         if self.consume(TokenType.MARK):
-            return QuantifierOptional()
+            # ? Optional (zero or one)
+            result = QuantifierOptional()
         elif self.consume(TokenType.KLEENE_STAR):
-            return QuantifierStar()
+            # * any number (possibly zero)
+            result = QuantifierKleeneStar()
         elif self.consume(TokenType.KLEENE_PLUS):
-            return QuantifierPlus()
+            # + at least one
+            result = QuantifierKleenePlus()
         elif self.consume(TokenType.LEFT_CURLY_BRACE):
-            pass
-        return QuantifierNone()
+            # {
+            if low := self.consume(TokenType.NUMBER):
+                # {m
+                if self.check(TokenType.RIGHT_CURLY_BRACE):
+                    # {m} exactly m
+                    match low.value:
+                        case 0:
+                            result = QuantifierPowerZero()
+                        case 1:
+                            result = None
+                        case m:
+                            result = QuantifierExact(exponent=m)
+                elif self.consume(TokenType.COMMA):
+                    # {m,
+                    if self.check(TokenType.RIGHT_CURLY_BRACE):
+                        # {m,} at least m
+                        match low.value:
+                            case 0:
+                                result = QuantifierKleeneStar()
+                            case 1:
+                                result = QuantifierKleenePlus()
+                            case m:
+                                result = QuantifierAtLeast(min_count=m)
+                    elif high := self.consume(TokenType.NUMBER):
+                        # {m,n} at least m and at most n
+                        match (low.value, high.value):
+                            case (0, 0):
+                                result = None
+                            case (0, 1):
+                                result = QuantifierOptional()
+                            case (1, 1):
+                                result = None
+                            case _:
+                                result = QuantifierBounded(
+                                    min_count=low.value,
+                                    max_count=high.value
+                                )
+            elif self.consume(TokenType.COMMA):
+                # {,
+                if self.check(TokenType.RIGHT_CURLY_BRACE):
+                    # {,} any number (possibly zero)
+                    result = QuantifierKleeneStar()
+                elif high := self.consume(TokenType.NUMBER):
+                    # {,n} at most n
+                    match high.value:
+                        case 0:
+                            result = QuantifierPowerZero()
+                        case 1:
+                            result = QuantifierOptional()
+                        case _:
+                            result = QuantifierAtMost(high.value)
+            else:
+                # Unexpected token after {
+                error = f'\nError in position {self.current.pos}\n'
+                error += 'Expected number or , after {\n'
+                error += f'{self.pattern}\n'
+                error += ' ' * self.current.pos + '^'
+                raise ValueError(error)
+
+            # Attempt to consume closing }
+            if not self.consume(TokenType.RIGHT_CURLY_BRACE):
+                error = f'\nError in position {self.current.pos}\n'
+                error += 'Expected }\n'
+                error += f'{self.pattern}\n'
+                error += ' ' * self.current.pos + '^'
+                raise ValueError(error)
+
+        return result
 
     # Primary => ε | SYMBOL | ( '(' Expression ')' )
     def parse_primary(self) -> ParseResult:
