@@ -298,8 +298,13 @@ class QuantifierBounded(Quantifier):
 
 
 class QuantifiedAST(RegularExpressionAST):
-    def __init__(self, inner_expr: RegularExpressionAST):
+    def __init__(
+        self,
+        inner_expr: RegularExpressionAST,
+        quantifier: Quantifier
+    ):
         self.inner_expr: RegularExpressionAST = inner_expr
+        self.quantifier: Quantifier = quantifier
 
     def __eq__(self, other):
         match other:
@@ -731,6 +736,10 @@ class RegularExpressionParser:
         error = primary.error
         if parsed_expression:
             while quantifier := self.consume_quantifier():
+                parsed_expression = QuantifiedAST(
+                    parsed_expression,
+                    quantifier
+                )
         else:
             parsed_expression = None
         return ParseResult(parsed_expression, error)
