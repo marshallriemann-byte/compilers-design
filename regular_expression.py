@@ -714,9 +714,7 @@ class RegularExpressionParser:
         parsed_expression = primary.parsed_expression
         error = primary.error
         if parsed_expression:
-                # Avoid stupid parse trees like a*********
-                # and (((((epsilon)*)*)*)*)*
-                parsed_expression = kleene_star(parsed_expression)
+            while quantifier := self.consume_quantifier():
         else:
             parsed_expression = None
         return ParseResult(parsed_expression, error)
@@ -724,7 +722,8 @@ class RegularExpressionParser:
     # Quantifier => '?' | '*' | '+' | BoundedQuantifier
     # BoundedQuantifier =>
     # '{' ( NUMBER ',' | ',' NUMER | NUMBER ',' NUMBER ) '}'
-    def parse_quantifier(self) -> Quantifier:
+    def consume_quantifier(self) -> Quantifier:
+        result = None  # Assuming no quantifier at current position
         if self.consume(TokenType.MARK):
             # ? Optional (zero or one)
             result = QuantifierOptional()
