@@ -545,7 +545,8 @@ class RegularExpressionParser:
     def parse(self) -> RegularExpressionAST:
         if self.current:
             result = self.parse_expression()
-            error, parsed_expression = result.error, result.parsed_expression
+            parsed_expression = result.parsed_expression
+            error = result.error
             if error:
                 # Syntax error
                 raise ValueError(error)
@@ -587,16 +588,18 @@ class RegularExpressionParser:
     # Expression => Concatenation ( '|' Concatenation )*
     def parse_expression(self) -> ParseResult:
         initial = self.parse_concatenation()
-        error, parsed_expression = initial.error, initial.parsed_expression
+        parsed_expression = initial.parsed_expression
+        error = initial.error
         if parsed_expression:
             alternatives: list[RegularExpressionAST] = [parsed_expression]
             while not error and self.consume(TokenType.UNION_BAR):
                 right_term = self.parse_concatenation()
-                if right_term.error:
+                parsed_expression = right_term.parsed_expression
+                error = right_term.error
+                if error:
                     parsed_expression = None
-                    error = right_term.error
-                elif right_term.parsed_expression:
-                    match right_term.parsed_expression:
+                elif parsed_expression:
+                    match parsed_expression:
                         case GroupAST(inner_expr=UnionAST(alternatives=alts)):
                             # Flatten unions
                             alternatives.extend(alts)
@@ -621,16 +624,18 @@ class RegularExpressionParser:
     # Concatenation => Quantified Quantified*
     def parse_concatenation(self) -> ParseResult:
         initial = self.parse_quantified()
-        error, parsed_expression = initial.error, initial.parsed_expression
+        parsed_expression = initial.parsed_expression
+        error = initial.error
         if parsed_expression:
             sequence: list[RegularExpressionAST] = [parsed_expression]
             while not error:
                 right_term = self.parse_quantified()
-                if right_term.error:
+                parsed_expression = right_term.parsed_expression
+                error = right_term.error
+                if error:
                     parsed_expression = None
-                    error = right_term.error
-                elif right_term.parsed_expression:
-                    match right_term.parsed_expression:
+                elif parsed_expression:
+                    match parsed_expression:
                         case EmptyStringAST():
                             # Concatenating empty string has no effect
                             pass
@@ -656,16 +661,14 @@ class RegularExpressionParser:
     # Quantified => Primary Quantifier*
     def parse_quantified(self) -> ParseResult:
         primary = self.parse_primary()
-        if primary.parsed_expression:
-            error = None
-            parsed_expression = primary.parsed_expression
-            while self.consume(TokenType.KLEENE_STAR):
+        parsed_expression = primary.parsed_expression
+        error = primary.error
+        if parsed_expression:
                 # Avoid stupid parse trees like a*********
                 # and (((((epsilon)*)*)*)*)*
                 parsed_expression = kleene_star(parsed_expression)
         else:
             parsed_expression = None
-            error = primary.error
         return ParseResult(parsed_expression, error)
 
     # Quantifier => '?' | '*' | '+' | BoundedQuantifier
@@ -783,7 +786,8 @@ class RegularExpressionParser:
     # Group => ( '(' Expression ')' )
     def parse_group(self) -> ParseResult:
         expr = self.parse_expression()
-        error, parsed_expression = expr.error, expr.parsed_expression
+        parsed_expression = expr.parsed_expression
+        error = expr.error
         if error:
             parsed_expression = None
         elif parsed_expression:
