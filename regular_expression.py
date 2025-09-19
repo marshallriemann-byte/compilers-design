@@ -208,6 +208,27 @@ class QuantifierOptional(Quantifier):
     def apply_on_NFA(self, nfa: NFA) -> NFA:
         return NFA.union_empty_string(nfa)
 
+    @abstractmethod
+    def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
+        match expr:
+            case QuantifiedAST(inner_expr=inner, quantifier=op):
+                match op:
+                    case (
+                        QuantifierNone() |
+                        QuantifierOptional() |
+                        QuantifierKleeneStar()
+                    ):
+                        return expr
+                    case QuantifierKleenePlus():
+                        return QuantifiedAST(
+                            inner_expr=inner,
+                            quantifier=QuantifierKleeneStar()
+                        )
+                    case _:
+                        return expr
+            case _:
+                return expr
+
     @override
     def __str__(self) -> str:
         return '?'
