@@ -175,7 +175,7 @@ class QuantifierNone(Quantifier):
         # Do nothing
         return nfa
 
-    @abstractmethod
+    @override
     def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
         # Do thing quantifier
         return expr
@@ -192,7 +192,7 @@ class QuantifierPowerZero(Quantifier):
         # R{0} = {empty string}
         return NFA.empty_string_language_NFA()
 
-    @abstractmethod
+    @override
     def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
         # R{0} = R{0,0} = R{,0} = {empty string}
         return EmptyStringAST()
@@ -208,7 +208,7 @@ class QuantifierOptional(Quantifier):
     def apply_on_NFA(self, nfa: NFA) -> NFA:
         return NFA.union_empty_string(nfa)
 
-    @abstractmethod
+    @override
     def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
         match expr:
             case QuantifiedAST(inner_expr=inner, quantifier=op):
