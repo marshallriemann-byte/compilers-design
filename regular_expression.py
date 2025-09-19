@@ -215,6 +215,7 @@ class QuantifierOptional(Quantifier):
                 match op:
                     case (
                         QuantifierNone() |
+                        QuantifierPowerZero() |
                         QuantifierOptional() |
                         QuantifierKleeneStar()
                     ):
