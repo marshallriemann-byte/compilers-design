@@ -195,7 +195,7 @@ class QuantifierPowerOne(Quantifier):
 
     @override
     def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
-        # Do thing quantifier
+        # R{1} = R{1,1} = R
         return expr
 
     @override
@@ -203,7 +203,7 @@ class QuantifierPowerOne(Quantifier):
         return '{1}'
 
 
-# Optional ? {0,1}
+# Optional ? {0,1} {,1}
 class QuantifierOptional(Quantifier):
     @override
     def apply_on_NFA(self, nfa: NFA) -> NFA:
@@ -217,10 +217,9 @@ class QuantifierOptional(Quantifier):
             case QuantifiedAST(inner_expr=inner, quantifier=op):
                 match op:
                     case (
-                        QuantifierPowerOne() |
-                        QuantifierPowerZero() |
                         QuantifierOptional() |
-                        QuantifierKleeneStar()
+                        QuantifierKleeneStar() |
+                        QuantifierAtMost()
                     ):
                         return expr
                     case QuantifierKleenePlus():
@@ -229,9 +228,15 @@ class QuantifierOptional(Quantifier):
                             quantifier=QuantifierKleeneStar()
                         )
                     case _:
-                        return expr
+                        return QuantifiedAST(
+                            inner_expr=inner,
+                            quantifier=QuantifierOptional()
+                        )
             case _:
-                return expr
+                return QuantifiedAST(
+                    inner_expr=inner,
+                    quantifier=QuantifierOptional()
+                )
 
     @override
     def __str__(self) -> str:
