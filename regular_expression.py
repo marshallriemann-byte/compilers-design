@@ -146,6 +146,12 @@ class ConcatenationAST(RegularExpressionAST):
 
 # Quantifiers: ? * + {m} {n,m} {,m} {m,}
 class Quantifier(ABC):
+    def __eq__(self, other) -> bool:
+        return type(other) is type(self)
+
+    def __hash__(self, other) -> bool:
+        return hash(type(self))
+
     @abstractmethod
     def apply(self, nfa: NFA) -> NFA:
         pass
@@ -164,9 +170,6 @@ class QuantifierPowerZero(Quantifier):
     def apply(self, nfa: NFA) -> NFA:
         return NFA.empty_string_language_NFA()
 
-    def __eq__(self, other) -> bool:
-        return type(other) is QuantifierPowerZero
-
     @override
     def __str__(self) -> str:
         return '{0}'
@@ -177,9 +180,6 @@ class QuantifierOptional(Quantifier):
     @override
     def apply(self, nfa: NFA) -> NFA:
         return NFA.union_empty_string(nfa)
-
-    def __eq__(self, other) -> bool:
-        return type(other) is QuantifierOptional
 
     @override
     def __str__(self) -> str:
@@ -192,9 +192,6 @@ class QuantifierKleeneStar(Quantifier):
     def apply(self, nfa: NFA) -> NFA:
         return NFA.kleene_star(nfa)
 
-    def __eq__(self, other) -> bool:
-        return type(other) is QuantifierKleeneStar
-
     @override
     def __str__(self) -> str:
         return '*'
@@ -205,9 +202,6 @@ class QuantifierKleenePlus(Quantifier):
     @override
     def apply(self, nfa: NFA) -> NFA:
         return NFA.kleene_plus(nfa)
-
-    def __eq__(self, other) -> bool:
-        return type(other) is QuantifierKleenePlus
 
     @override
     def __str__(self) -> str:
