@@ -416,6 +416,7 @@ class RegularExpressionParser:
         self.pattern: str = pattern
         self.pos = 0
         self.current: Token = None
+        self.inside_bounded_quantifier = False
         self.generate_next_token()
 
     def generate_next_token(self):
@@ -430,7 +431,10 @@ class RegularExpressionParser:
                     value=EMPTY_STRING_CHAR,
                     token_type=TokenType.EMPTY_STRING_TOKEN,
                 )
-            case c if number := NUMBERS_PATTERN.match(self.pattern, self.pos):
+            case c if (
+                number := NUMBERS_PATTERN.match(self.pattern, self.pos)
+                and self.inside_bounded_quantifier
+            ):
                 result = Token(
                     value=number.group(),
                     token_type=TokenType.NUMBER,
@@ -451,19 +455,31 @@ class RegularExpressionParser:
                     token_type=TokenType.MARK,
                 )
             case '{':
-                result = Token(
-                    value='{',
-                    token_type=TokenType.LEFT_CURLY_BRACE,
+                next_char = (
+                    None if self.pos >= len(self.pattern)
+                    else self.pattern[self.pos]
                 )
-            case ',':
-                result = Token(
-                    value=',',
-                    token_type=TokenType.COMMA,
-                )
-            case '}':
+                if next_char and (next_char == ',' or next_char.isdigit()):
+                    result = Token(
+                        value='{',
+                        token_type=TokenType.LEFT_CURLY_BRACE,
+                    )
+                    self.inside_bounded_quantifier = True
+                else:
+                    result = Token(
+                        value='{',
+                        token_type=TokenType.SYMBOL,
+                    )
+            case '}' if self.inside_bounded_quantifier:
                 result = Token(
                     value='}',
                     token_type=TokenType.RIGHT_CURLY_BRACE,
+                )
+                self.inside_bounded_quantifier = False
+            case ',' if self.inside_bounded_quantifier:
+                result = Token(
+                    value=',',
+                    token_type=TokenType.COMMA,
                 )
             case '|':
                 result = Token(
@@ -496,6 +512,8 @@ class RegularExpressionParser:
                 else:
                     raise ValueError('Trailing slash at pattern end')
             case c:
+                if self.inside_bounded_quantifier:
+                    self.inside_bounded_quantifier = False
                 result = Token(
                     value=c,
                     token_type=TokenType.SYMBOL,
