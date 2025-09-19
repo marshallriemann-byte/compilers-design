@@ -211,6 +211,8 @@ class QuantifierOptional(Quantifier):
     @override
     def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
         match expr:
+            case EmptyLanguageAST() | EmptyStringAST():
+                return EmptyStringAST()
             case QuantifiedAST(inner_expr=inner, quantifier=op):
                 match op:
                     case (
@@ -240,6 +242,16 @@ class QuantifierKleeneStar(Quantifier):
     @override
     def apply_on_NFA(self, nfa: NFA) -> NFA:
         return NFA.kleene_star(nfa)
+
+    @override
+    def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
+        match expr:
+            case QuantifiedAST(inner_expr=inner, quantifier=op):
+                match op:
+                    case _:
+                        return expr
+            case _:
+                return expr
 
     @override
     def __str__(self) -> str:
