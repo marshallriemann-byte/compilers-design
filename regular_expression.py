@@ -25,37 +25,40 @@ class TokenType(Enum):
     NUMBER = 12
 
 
-class Token:
+class BasicToken:
     def __init__(self, token_type: TokenType, pos: int = 0):
         self.token_type: TokenType = token_type
         self.pos: int = pos
 
     def __repr__(self):
-        value = f"Token(type={self.token_type}, "
+        value = f"BasicToken(type={self.token_type}, "
         value += f'pos={self.pos})'
         return value
 
 
-class SymbolToken(Token):
+class SymbolToken(BasicToken):
     def __int__(self, value: str):
         self.value: str = value
 
     def __repr__(self):
-        value = f"Token(value='{self.value}', "
+        value = f"SymbolToken(value='{self.value}', "
         value += f'type={self.token_type}, '
         value += f'pos={self.pos})'
         return value
 
 
-class NumberToken(Token):
+class NumberToken(BasicToken):
     def __int__(self, value: int):
         self.value: int = value
 
     def __repr__(self):
-        value = f'Token(value={self.value}, '
+        value = f'NumberToken(value={self.value}, '
         value += f'type={self.token_type}, '
         value += f'pos={self.pos})'
         return value
+
+
+type Token = BasicToken | SymbolToken | NumberToken
 
 
 # Regular expressions abtract base class
@@ -447,7 +450,7 @@ class RegularExpressionParser:
         )
         match current_char:
             case c if c == EMPTY_STRING_CHAR:
-                result = Token(
+                result = BasicToken(
                     token_type=TokenType.EMPTY_STRING_TOKEN,
                 )
             case c if (
@@ -459,15 +462,15 @@ class RegularExpressionParser:
                     token_type=TokenType.NUMBER,
                 )
             case '*':
-                result = Token(
+                result = BasicToken(
                     token_type=TokenType.KLEENE_STAR,
                 )
             case '+':
-                result = Token(
+                result = BasicToken(
                     token_type=TokenType.KLEENE_PLUS,
                 )
             case '?':
-                result = Token(
+                result = BasicToken(
                     token_type=TokenType.MARK,
                 )
             case '{':
@@ -476,7 +479,7 @@ class RegularExpressionParser:
                     else self.pattern[self.pos]
                 )
                 if next_char and (next_char == ',' or next_char.isdigit()):
-                    result = Token(
+                    result = BasicToken(
                         token_type=TokenType.LEFT_CURLY_BRACE,
                     )
                     self.inside_bounded_quantifier = True
@@ -486,24 +489,24 @@ class RegularExpressionParser:
                         token_type=TokenType.SYMBOL,
                     )
             case '}' if self.inside_bounded_quantifier:
-                result = Token(
+                result = BasicToken(
                     token_type=TokenType.RIGHT_CURLY_BRACE,
                 )
                 self.inside_bounded_quantifier = False
             case ',' if self.inside_bounded_quantifier:
-                result = Token(
+                result = BasicToken(
                     token_type=TokenType.COMMA,
                 )
             case '|':
-                result = Token(
+                result = BasicToken(
                     token_type=TokenType.UNION_BAR,
                 )
             case '(':
-                result = Token(
+                result = BasicToken(
                     token_type=TokenType.LEFT_PARENTHESIS,
                 )
             case ')':
-                result = Token(
+                result = BasicToken(
                     token_type=TokenType.RIGHT_PARENTHESIS,
                 )
             case '\\':
