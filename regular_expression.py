@@ -152,6 +152,9 @@ class Quantifier(ABC):
     def __hash__(self, other) -> bool:
         return hash(type(self))
 
+    def __repr__(self) -> str:
+        return self.__class__.__name__ + '()'
+
     @abstractmethod
     def apply_on_NFA(self, nfa: NFA) -> NFA:
         pass
