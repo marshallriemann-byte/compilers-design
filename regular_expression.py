@@ -175,6 +175,11 @@ class QuantifierNone(Quantifier):
         # Do nothing
         return nfa
 
+    @abstractmethod
+    def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
+        # Do thing quantifier
+        return expr
+
     @override
     def __str__(self) -> str:
         return '{1}'
