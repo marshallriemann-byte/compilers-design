@@ -168,23 +168,7 @@ class Quantifier(ABC):
         pass
 
 
-# {1} or {1,1}
-class QuantifierPowerOne(Quantifier):
-    @override
-    def apply_on_NFA(self, nfa: NFA) -> NFA:
-        # Do nothing
-        return nfa
-
-    @override
-    def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
-        # Do thing quantifier
-        return expr
-
-    @override
-    def __str__(self) -> str:
-        return '{1}'
-
-
+# Quantifier types
 # Power zero {0} {0,0} {,0}
 class QuantifierPowerZero(Quantifier):
     @override
@@ -200,6 +184,23 @@ class QuantifierPowerZero(Quantifier):
     @override
     def __str__(self) -> str:
         return '{0}'
+
+
+# Power 1 {1} or {1,1}
+class QuantifierPowerOne(Quantifier):
+    @override
+    def apply_on_NFA(self, nfa: NFA) -> NFA:
+        # Do nothing
+        return nfa
+
+    @override
+    def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
+        # Do thing quantifier
+        return expr
+
+    @override
+    def __str__(self) -> str:
+        return '{1}'
 
 
 # Optional ? {0,1}
@@ -342,6 +343,7 @@ class QuantifierBounded(Quantifier):
     @override
     def __str__(self) -> str:
         return f'{{{self.min_count},{self.max_count}}}'
+# Quantifier types end
 
 
 class QuantifiedAST(RegularExpressionAST):
