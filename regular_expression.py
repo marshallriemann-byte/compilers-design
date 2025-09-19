@@ -159,6 +159,9 @@ class Quantifier(ABC):
     def apply_on_NFA(self, nfa: NFA) -> NFA:
         pass
 
+    @abstractmethod
+    def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
+        pass
 
     @abstractmethod
     def __str__(self) -> str:
