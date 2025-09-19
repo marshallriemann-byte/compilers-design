@@ -192,6 +192,11 @@ class QuantifierPowerZero(Quantifier):
         # R{0} = {empty string}
         return NFA.empty_string_language_NFA()
 
+    @abstractmethod
+    def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
+        # R{0} = R{0,0} = R{,0} = {empty string}
+        return EmptyStringAST()
+
     @override
     def __str__(self) -> str:
         return '{0}'
