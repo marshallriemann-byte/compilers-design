@@ -128,6 +128,16 @@ class Quantifier(ABC):
         pass
 
 
+# No quantifier
+class QuantifierNone(Quantifier):
+    @override
+    def apply(self, nfa: NFA) -> NFA:
+        return nfa
+
+    def __eq__(self, other) -> bool:
+        return type(other) is QuantifierNone
+
+
 # Optional ? {0,1}
 class QuantifierOptional(Quantifier):
     @override
