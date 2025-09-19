@@ -173,12 +173,12 @@ class Quantifier(ABC):
 class QuantifierPowerZero(Quantifier):
     @override
     def apply_on_NFA(self, nfa: NFA) -> NFA:
-        # R{0} = {empty string}
+        # R{0} = {ε}
         return NFA.empty_string_language_NFA()
 
     @override
     def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
-        # R{0} = R{0,0} = R{,0} = {empty string}
+        # R{0} = R{0,0} = R{,0} = {ε}
         return EmptyStringAST()
 
     @override
@@ -213,16 +213,18 @@ class QuantifierOptional(Quantifier):
     def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
         match expr:
             case EmptyLanguageAST() | EmptyStringAST():
+                # ε{0,1} = Φ{0,1} = ε
                 return EmptyStringAST()
             case QuantifiedAST(inner_expr=inner, quantifier=op):
                 match op:
                     case (
-                        QuantifierOptional() |
-                        QuantifierKleeneStar() |
-                        QuantifierAtMost()
+                        QuantifierOptional() |  # (R?)? = R?
+                        QuantifierKleeneStar() |  # (R*)? = R*
+                        QuantifierAtMost()  # (R{,m})? = R{,m}
                     ):
                         return expr
                     case QuantifierKleenePlus():
+                        # (R+){0,1} = R*
                         return QuantifiedAST(
                             inner_expr=inner,
                             quantifier=QuantifierKleeneStar()
