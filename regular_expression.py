@@ -169,7 +169,7 @@ class Quantifier(ABC):
 
 
 # {1} or {1,1}
-class QuantifierNone(Quantifier):
+class QuantifierPowerOne(Quantifier):
     @override
     def apply_on_NFA(self, nfa: NFA) -> NFA:
         # Do nothing
@@ -216,7 +216,7 @@ class QuantifierOptional(Quantifier):
             case QuantifiedAST(inner_expr=inner, quantifier=op):
                 match op:
                     case (
-                        QuantifierNone() |
+                        QuantifierPowerOne() |
                         QuantifierPowerZero() |
                         QuantifierOptional() |
                         QuantifierKleeneStar()
@@ -815,7 +815,7 @@ class RegularExpressionParser:
                         case 0:
                             result = QuantifierPowerZero()
                         case 1:
-                            result = QuantifierNone()
+                            result = QuantifierPowerOne()
                         case m:
                             result = QuantifierExact(exponent=m)
                 elif self.consume(TokenType.COMMA):
@@ -833,11 +833,11 @@ class RegularExpressionParser:
                         # {m,n} at least m and at most n
                         match (low.value, high.value):
                             case (0, 0):
-                                result = QuantifierNone()
+                                result = QuantifierPowerOne()
                             case (0, 1):
                                 result = QuantifierOptional()
                             case (1, 1):
-                                result = QuantifierNone()
+                                result = QuantifierPowerOne()
                             case _:
                                 result = QuantifierBounded(
                                     min_count=low.value,
