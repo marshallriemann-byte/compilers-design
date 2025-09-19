@@ -153,7 +153,7 @@ class Quantifier(ABC):
         return hash(type(self))
 
     @abstractmethod
-    def apply(self, nfa: NFA) -> NFA:
+    def apply_on_NFA(self, nfa: NFA) -> NFA:
         pass
 
     def __repr__(self) -> str:
@@ -167,7 +167,7 @@ class Quantifier(ABC):
 # Power zero {0} or {0,0}
 class QuantifierPowerZero(Quantifier):
     @override
-    def apply(self, nfa: NFA) -> NFA:
+    def apply_on_NFA(self, nfa: NFA) -> NFA:
         return NFA.empty_string_language_NFA()
 
     @override
@@ -178,7 +178,7 @@ class QuantifierPowerZero(Quantifier):
 # Optional ? {0,1}
 class QuantifierOptional(Quantifier):
     @override
-    def apply(self, nfa: NFA) -> NFA:
+    def apply_on_NFA(self, nfa: NFA) -> NFA:
         return NFA.union_empty_string(nfa)
 
     @override
@@ -189,7 +189,7 @@ class QuantifierOptional(Quantifier):
 # Ordindary Kleene star * {0,}
 class QuantifierKleeneStar(Quantifier):
     @override
-    def apply(self, nfa: NFA) -> NFA:
+    def apply_on_NFA(self, nfa: NFA) -> NFA:
         return NFA.kleene_star(nfa)
 
     @override
@@ -200,7 +200,7 @@ class QuantifierKleeneStar(Quantifier):
 # Kleene plus + {1,}
 class QuantifierKleenePlus(Quantifier):
     @override
-    def apply(self, nfa: NFA) -> NFA:
+    def apply_on_NFA(self, nfa: NFA) -> NFA:
         return NFA.kleene_plus(nfa)
 
     @override
@@ -214,7 +214,7 @@ class QuantifierExact(Quantifier):
     exponent: int
 
     @override
-    def apply(self, nfa: NFA) -> NFA:
+    def apply_on_NFA(self, nfa: NFA) -> NFA:
         return NFA.power(nfa, self.exponent)
 
     @override
@@ -232,7 +232,7 @@ class QuantifierAtLeast(Quantifier):
     min_count: int
 
     @override
-    def apply(self, nfa: NFA) -> NFA:
+    def apply_on_NFA(self, nfa: NFA) -> NFA:
         return NFA.at_least_NFA(nfa, self.min_count)
 
     @override
@@ -250,7 +250,7 @@ class QuantifierAtMost(Quantifier):
     max_count: int
 
     @override
-    def apply(self, nfa: NFA) -> NFA:
+    def apply_on_NFA(self, nfa: NFA) -> NFA:
         return NFA.at_most_NFA(nfa, self.max_count)
 
     @override
@@ -269,7 +269,7 @@ class QuantifierBounded(Quantifier):
     max_count: int
 
     @override
-    def apply(self, nfa: NFA) -> NFA:
+    def apply_on_NFA(self, nfa: NFA) -> NFA:
         return NFA.bounded_NFA(
             nfa, self.min_count, self.max_count
         )
