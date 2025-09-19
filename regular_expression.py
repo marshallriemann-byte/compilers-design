@@ -785,9 +785,8 @@ class RegularExpressionParser:
         error = primary.error
         if parsed_expression:
             while quantifier := self.consume_quantifier():
-                parsed_expression = QuantifiedAST(
-                    parsed_expression,
-                    quantifier
+                parsed_expression = (
+                    quantifier.apply_on_expression(parsed_expression)
                 )
         else:
             parsed_expression = None
