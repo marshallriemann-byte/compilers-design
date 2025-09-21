@@ -431,7 +431,10 @@ class QuantifiedAST(RegularExpressionAST):
 
     @override
     def __repr__(self) -> str:
-        return f'Quantified({repr(self.inner_expr)})'
+        return (
+            f'Quantified({repr(self.inner_expr)}, ' +
+            f'{repr(self.quantifier)})'
+        )
 
     @override
     def __str__(self) -> str:
@@ -440,7 +443,7 @@ class QuantifiedAST(RegularExpressionAST):
                 value = f'({str(self.inner_expr)})'
             case _:
                 value = f'{str(self.inner_expr)}'
-        return f'{value}{self.quantifier}'
+        return f'{value}{str(self.quantifier)}'
 
 
 class EmptyStringAST(RegularExpressionAST):
