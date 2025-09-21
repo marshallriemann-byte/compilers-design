@@ -627,12 +627,11 @@ class RegularExpressionParser:
         self.generate_next_token()
 
     def generate_next_token(self):
+        if self.pos >= len(self.pattern):
+            self.current = None
+            return None
         begin = self.pos
-        current_char = (
-            None if self.pos >= len(self.pattern)
-            else self.pattern[self.pos]
-        )
-        match current_char:
+        match self.pattern[self.pos]:
             case c if c == EMPTY_STRING_CHAR:
                 result = BasicToken(
                     token_type=TokenType.EMPTY_STRING_TOKEN,
@@ -715,8 +714,6 @@ class RegularExpressionParser:
                     value=c,
                     token_type=TokenType.SYMBOL,
                 )
-            case None:
-                result = None
         self.current = result
         if self.current:
             self.current.pos = begin
