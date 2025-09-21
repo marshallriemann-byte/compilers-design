@@ -256,11 +256,25 @@ class QuantifierKleeneStar(Quantifier):
             case EmptyStringAST() | EmptyLanguageAST():
                 # ε* = Φ* = ε
                 return EmptyStringAST()
-            case QuantifiedAST(
-                inner_expr=_,
-                quantifier=QuantifierKleeneStar()
-            ):
-                return expr
+            case QuantifiedAST(inner_expr=inner, quantifier=op):
+                match op:
+                    case QuantifierKleeneStar():
+                        # (R*)* = R*
+                        return expr
+                    case (
+                        QuantifierOptional() |  # (R?)* = (ε|R)* = R*
+                        QuantifierKleenePlus() |  # (R+)* = R*
+                        QuantifierAtMost()  # (R{,n}) = (ε|R|RR|...|R^n)* = R*
+                    ):
+                        return QuantifiedAST(
+                            inner_expr=inner,
+                            quantifier=QuantifierKleeneStar()
+                        )
+                    case _:
+                        return QuantifiedAST(
+                            inner_expr=expr,
+                            quantifier=QuantifierKleeneStar()
+                        )
             case _:
                 return QuantifiedAST(
                     inner_expr=expr,
@@ -1017,8 +1031,3 @@ class RegularExpression:
         re.ast = deepcopy(ast)
         re.nfa = re.ast.to_NFA()
         return re
-
-
-re = RegularExpression('a+++++++++++*********')
-print(str(re))
-print(repr(re))
