@@ -435,9 +435,9 @@ class QuantifiedAST(RegularExpressionAST):
     def __str__(self) -> str:
         match self.inner_expr:
             case UnionAST() | ConcatenationAST():
-                value = f'({str(self.inner_expr)})*'
+                value = f'({str(self.inner_expr)})'
             case _:
-                value = f'{str(self.inner_expr)}*'
+                value = f'{str(self.inner_expr)}'
         return f'{value}{self.quantifier}'
 
 
