@@ -307,13 +307,10 @@ class QuantifierKleenePlus(Quantifier):
                         # (R+)+ = R+
                         return expr
                     case (
-                        QuantifierOptional() |
-                        QuantifierKleeneStar() |
-                        QuantifierAtMost()
+                        QuantifierOptional() |  # (R?)+ = (ε|R)+ = R*
+                        QuantifierKleeneStar() |  # (R*)+ = R*
+                        QuantifierAtMost()  # (R{,n})+ = (ε|R|RR|...|R^n)+ = R*
                     ):
-                        # (R{0,1})+ = R*
-                        # (R*)+ = R*
-                        # (R{,m})+ = R*
                         return QuantifiedAST(
                             inner_expr=inner,
                             quantifier=QuantifierKleeneStar()
