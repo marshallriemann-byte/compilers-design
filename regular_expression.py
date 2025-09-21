@@ -37,7 +37,8 @@ class BasicToken:
 
 
 class SymbolToken(BasicToken):
-    def __int__(self, value: str):
+    def __init__(self, value: str, pos: int = 0):
+        super().__init__(TokenType.SYMBOL, pos)
         self.value: str = value
 
     def __repr__(self):
@@ -48,7 +49,8 @@ class SymbolToken(BasicToken):
 
 
 class NumberToken(BasicToken):
-    def __int__(self, value: int):
+    def __init__(self, value: int, pos: int = 0):
+        super().__init__(TokenType.NUMBER, pos)
         self.value: int = value
 
     def __repr__(self):
@@ -56,9 +58,6 @@ class NumberToken(BasicToken):
         value += f'type={self.token_type}, '
         value += f'pos={self.pos})'
         return value
-
-
-type Token = BasicToken | SymbolToken | NumberToken
 
 
 # Regular expressions abtract base class
@@ -236,7 +235,7 @@ class QuantifierOptional(Quantifier):
                         )
             case _:
                 return QuantifiedAST(
-                    inner_expr=inner,
+                    inner_expr=expr,
                     quantifier=QuantifierOptional()
                 )
 
@@ -273,7 +272,7 @@ class QuantifierKleeneStar(Quantifier):
                         )
             case _:
                 return QuantifiedAST(
-                    inner_expr=inner,
+                    inner_expr=expr,
                     quantifier=QuantifierKleeneStar()
                 )
 
@@ -321,7 +320,7 @@ class QuantifierKleenePlus(Quantifier):
                         )
             case _:
                 return QuantifiedAST(
-                    inner_expr=inner,
+                    inner_expr=expr,
                     quantifier=QuantifierKleenePlus()
                 )
 
@@ -622,7 +621,7 @@ class RegularExpressionParser:
     def __init__(self, pattern: str):
         self.pattern: str = pattern
         self.pos = 0
-        self.current: Token = None
+        self.current: BasicToken = None
         self.inside_bounded_quantifier = False
         self.generate_next_token()
 
@@ -641,8 +640,7 @@ class RegularExpressionParser:
                 and self.inside_bounded_quantifier
             ):
                 result = NumberToken(
-                    value=int(number.group()),
-                    token_type=TokenType.NUMBER,
+                    value=int(number.group())
                 )
             case '*':
                 result = BasicToken(
@@ -667,10 +665,7 @@ class RegularExpressionParser:
                     )
                     self.inside_bounded_quantifier = True
                 else:
-                    result = SymbolToken(
-                        value='{',
-                        token_type=TokenType.SYMBOL,
-                    )
+                    result = SymbolToken(value='{')
             case '}' if self.inside_bounded_quantifier:
                 result = BasicToken(
                     token_type=TokenType.RIGHT_CURLY_BRACE,
@@ -701,19 +696,13 @@ class RegularExpressionParser:
                     else:
                         # ignore next char, emit backslash as symbol
                         char = '\\'
-                    result = SymbolToken(
-                        value=char,
-                        token_type=TokenType.SYMBOL,
-                    )
+                    result = SymbolToken(value=char)
                 else:
                     raise ValueError('Trailing slash at pattern end')
             case c:
                 if self.inside_bounded_quantifier:
                     self.inside_bounded_quantifier = False
-                result = SymbolToken(
-                    value=c,
-                    token_type=TokenType.SYMBOL,
-                )
+                result = SymbolToken(value=c)
         self.current = result
         if self.current:
             self.current.pos = begin
@@ -755,7 +744,7 @@ class RegularExpressionParser:
     def check(self, expected_type: TokenType) -> bool:
         return self.current and self.current.token_type == expected_type
 
-    def consume(self, expected_type: TokenType) -> Token:
+    def consume(self, expected_type: TokenType) -> BasicToken:
         if self.check(expected_type):
             current_copy = deepcopy(self.current)
             self.generate_next_token()
@@ -934,7 +923,10 @@ class RegularExpressionParser:
 
     # Primary => ε | SYMBOL | ( '(' Expression ')' )
     def parse_primary(self) -> ParseResult:
-        current_type = None if not self.current else self.current.token_type
+        current_type = (
+            None if not self.current
+            else self.current.token_type
+        )
         match current_type:
             case TokenType.EMPTY_STRING_TOKEN:
                 self.generate_next_token()
@@ -944,7 +936,7 @@ class RegularExpressionParser:
                 )
             case TokenType.SYMBOL:
                 symbol_value = self.current.value
-                self.generate_next_token()  # Consume (
+                self.generate_next_token()  # Consume symbol
                 return ParseResult(
                     parsed_expression=SymbolAST(
                         value=symbol_value
