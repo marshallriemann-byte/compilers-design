@@ -289,6 +289,43 @@ class QuantifierKleenePlus(Quantifier):
         return NFA.kleene_plus(nfa)
 
     @override
+    def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
+        match expr:
+            case EmptyStringAST():
+                # ε+ = ε
+                return EmptyStringAST()
+            case EmptyLanguageAST():
+                # Φ+ = Φ
+                return EmptyLanguageAST()
+            case QuantifiedAST(inner_expr=inner, quantifier=op):
+                match op:
+                    case QuantifierKleenePlus():
+                        # (R+)+ = R+
+                        return expr
+                    case (
+                        QuantifierOptional() |
+                        QuantifierKleeneStar() |
+                        QuantifierAtMost()
+                    ):
+                        # (R{0,1})+ = R*
+                        # (R*)+ = R*
+                        # (R{,m})+ = R*
+                        return QuantifiedAST(
+                            inner_expr=inner,
+                            quantifier=QuantifierKleeneStar()
+                        )
+                    case _:
+                        return QuantifiedAST(
+                            inner_expr=inner,
+                            quantifier=QuantifierKleenePlus()
+                        )
+            case _:
+                return QuantifiedAST(
+                    inner_expr=inner,
+                    quantifier=QuantifierKleenePlus()
+                )
+
+    @override
     def __str__(self) -> str:
         return '+'
 
