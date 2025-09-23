@@ -91,7 +91,9 @@ class UnionAST(RegularExpressionAST):
     def __eq__(self, other):
         match other:
             case UnionAST(alternatives=alts):
-                return self.alternatives == alts
+                return (
+                    frozenset(self.alternatives) == frozenset(alts)
+                )
             case _:
                 return False
 
@@ -418,8 +420,11 @@ class QuantifiedAST(RegularExpressionAST):
 
     def __eq__(self, other):
         match other:
-            case QuantifiedAST(inner_expr=expr):
-                return self.inner_expr == expr
+            case QuantifiedAST(inner_expr=expr, quantifier=op):
+                return (
+                    self.inner_expr == expr and
+                    self.quantifier == op
+                )
             case _:
                 return False
 
@@ -582,15 +587,7 @@ def concatenate(
 
 
 def kleene_star(x: RegularExpressionAST) -> RegularExpressionAST:
-    match x:
-        case EmptyLanguageAST() | EmptyStringAST():
-            # ∅* = ε, ε* = ε
-            return EmptyStringAST()
-        case QuantifiedAST():
-            # x = R* => x* = (R*)* = R*
-            return x
-        case expr:
-            return QuantifiedAST(expr)
+    return QuantifierKleeneStar().apply_on_expression(x)
 
 
 # Regular expressions context free grammar
@@ -661,8 +658,8 @@ class RegularExpressionParser:
                 )
             case '{':
                 next_char = (
-                    None if self.pos >= len(self.pattern)
-                    else self.pattern[self.pos]
+                    None if self.pos+1 >= len(self.pattern)
+                    else self.pattern[self.pos+1]
                 )
                 if next_char in QUANTIFIERS_CHARS:
                     result = BasicToken(
