@@ -343,6 +343,10 @@ class QuantifierExact(Quantifier):
         return NFA.power(nfa, self.exponent)
 
     @override
+    def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
+        pass
+
+    @override
     def __repr__(self) -> str:
         return f'QuantifierExact({self.exponent})'
 
@@ -361,6 +365,10 @@ class QuantifierAtLeast(Quantifier):
         return NFA.at_least_NFA(nfa, self.min_count)
 
     @override
+    def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
+        pass
+
+    @override
     def __repr__(self) -> str:
         return f'QuantifierAtLeast({self.min_count})'
 
@@ -377,6 +385,10 @@ class QuantifierAtMost(Quantifier):
     @override
     def apply_on_NFA(self, nfa: NFA) -> NFA:
         return NFA.at_most_NFA(nfa, self.max_count)
+
+    @override
+    def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
+        pass
 
     @override
     def __repr__(self) -> str:
@@ -398,6 +410,10 @@ class QuantifierBounded(Quantifier):
         return NFA.bounded_NFA(
             nfa, self.min_count, self.max_count
         )
+
+    @override
+    def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
+        pass
 
     @override
     def __repr__(self) -> str:
