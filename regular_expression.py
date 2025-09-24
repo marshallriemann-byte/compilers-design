@@ -632,17 +632,11 @@ class RegularExpressionParser:
             self.current = None
             return None
         begin = self.pos
+        step = 1
         match self.pattern[self.pos]:
             case c if c == EMPTY_STRING_CHAR:
                 result = BasicToken(
                     token_type=TokenType.EMPTY_STRING_TOKEN,
-                )
-            case c if (
-                number := NUMBERS_PATTERN.match(self.pattern, self.pos)
-                and self.inside_bounded_quantifier
-            ):
-                result = NumberToken(
-                    value=int(number.group())
                 )
             case '*':
                 result = BasicToken(
@@ -694,7 +688,7 @@ class RegularExpressionParser:
                     char = self.pattern[self.pos+1]
                     if char in META_CHARACTERS:
                         # Metacharacter symbol
-                        self.pos += 1  # Skip escape backslash
+                        step += 1  # Skip escape backslash
                     else:
                         # ignore next char, emit backslash as symbol
                         char = '\\'
@@ -703,12 +697,19 @@ class RegularExpressionParser:
                     raise ValueError('Trailing slash at pattern end')
             case c:
                 if self.inside_bounded_quantifier:
-                    self.inside_bounded_quantifier = False
-                result = SymbolToken(value=c)
+                    if number := NUMBERS_PATTERN.match(self.pattern, self.pos):
+                        result = NumberToken(
+                            value=int(number.group())
+                        )
+                        step = len(number.group())
+                    else:
+                        self.inside_bounded_quantifier = False
+                else:
+                    result = SymbolToken(value=c)
         self.current = result
         if self.current:
             self.current.pos = begin
-            self.pos += 1
+            self.pos += step
 
     def parse(self) -> RegularExpressionAST:
         if self.current:
@@ -882,7 +883,7 @@ class RegularExpressionParser:
                         # {m,n} at least m and at most n
                         match (low.value, high.value):
                             case (0, 0):
-                                result = QuantifierPowerOne()
+                                result = QuantifierPowerZero()
                             case (0, 1):
                                 result = QuantifierOptional()
                             case (1, 1):
