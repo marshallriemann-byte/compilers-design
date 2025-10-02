@@ -1,6 +1,6 @@
 # Regular expressions
 
-from nfa import NFA, Symbol
+from nfa import NFA, Symbol, ComputationResult
 from enum import Enum
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
@@ -1041,6 +1041,9 @@ class RegularExpression:
                     self.nfa.compute_minimized_DFA().rename_states()
                 )
             self.is_optimized = True
+
+    def is_match(self, string: str) -> bool:
+        return self.nfa.compute(string) == ComputationResult.ACCEPT
 
     def __repr__(self) -> str:
         pattern = f"pattern='{self.pattern}'"
