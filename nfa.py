@@ -70,26 +70,14 @@ class NFA:
         if len(self.transition_function) < len(self.states):
             # This NFA does not have transitions for all states
             is_deterministic = False
-        # self._automaton_type is written once
-        # you can not mutate it never again
         if is_deterministic:
-            self._automaton_type = AutomatonType.DETERMINISTIC
+            self.automaton_type = AutomatonType.DETERMINISTIC
         else:
-            self._automaton_type = AutomatonType.NONDETERMINISTIC
+            self.automaton_type = AutomatonType.NONDETERMINISTIC
         self.is_minimized = False
 
-    @property
-    def automaton_type(self):
-        # Okay, you can read it
-        return self._automaton_type
-
-    @automaton_type.setter
-    def automaton_type(self, new_value):
-        # No mutation possible!
-        pass
-
     def __repr__(self):
-        if self._automaton_type == AutomatonType.DETERMINISTIC:
+        if self.automaton_type == AutomatonType.DETERMINISTIC:
             label = "DFA"
         else:
             label = "NFA"
@@ -147,7 +135,7 @@ class NFA:
                 queue.append(s + c)
 
     def compute_equivalent_DFA(self) -> Self:
-        if self._automaton_type == AutomatonType.DETERMINISTIC:
+        if self.automaton_type == AutomatonType.DETERMINISTIC:
             return deepcopy(self)
 
         names: dict[States, State] = dict()
@@ -222,7 +210,7 @@ class NFA:
             return deepcopy(self)
         elif self.automaton_type == AutomatonType.NONDETERMINISTIC:
             source_nfa = self.compute_equivalent_DFA()
-        elif self._automaton_type == AutomatonType.DETERMINISTIC:
+        elif self.automaton_type == AutomatonType.DETERMINISTIC:
             source_nfa = self
 
         partitions = set()
