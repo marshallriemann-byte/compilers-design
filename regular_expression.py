@@ -344,7 +344,10 @@ class QuantifierExact(Quantifier):
 
     @override
     def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
-        pass
+        return QuantifiedAST(
+            inner_expr=expr,
+            quantifier=deepcopy(self)
+        )
 
     @override
     def __repr__(self) -> str:
@@ -366,7 +369,10 @@ class QuantifierAtLeast(Quantifier):
 
     @override
     def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
-        pass
+        return QuantifiedAST(
+            inner_expr=expr,
+            quantifier=deepcopy(self)
+        )
 
     @override
     def __repr__(self) -> str:
@@ -388,7 +394,10 @@ class QuantifierAtMost(Quantifier):
 
     @override
     def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
-        pass
+        return QuantifiedAST(
+            inner_expr=expr,
+            quantifier=deepcopy(self)
+        )
 
     @override
     def __repr__(self) -> str:
@@ -413,7 +422,10 @@ class QuantifierBounded(Quantifier):
 
     @override
     def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
-        pass
+        return QuantifiedAST(
+            inner_expr=expr,
+            quantifier=deepcopy(self)
+        )
 
     @override
     def __repr__(self) -> str:
