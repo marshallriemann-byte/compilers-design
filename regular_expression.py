@@ -916,6 +916,8 @@ class RegularExpressionParser:
                                 result = QuantifierOptional()
                             case (1, 1):
                                 result = QuantifierPowerOne()
+                            case (0, n):
+                                result = QuantifierAtMost(max_count=n)
                             case _:
                                 result = QuantifierBounded(
                                     min_count=low.value,
