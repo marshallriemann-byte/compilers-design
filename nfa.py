@@ -305,6 +305,7 @@ class NFA:
         self.accept_states = {names[q] for q in self.accept_states}
         return self
 
+    # Operators overloading
     def __add__(self, other: Self) -> Self:
         return NFA.concatenate([self, other])
 
@@ -313,7 +314,9 @@ class NFA:
 
     def __invert__(self) -> Self:
         return NFA.kleene_star(self)
+    # Operators overloading end
 
+    # Thomspon constructions
     @staticmethod
     def kleene_star(nfa: Self) -> Self:
         star_nfa_start_state = f'(STAR, {uuid4().hex})'
@@ -415,6 +418,44 @@ class NFA:
             start_state,
             accept_states
         )
+    # Thomspon constructions end
+
+    # Special NFAs
+    @staticmethod
+    def empty_language_NFA() -> Self:
+        return NFA(
+            states={'q0'},
+            alphabet=set(),
+            transition_function=dict(),
+            start_state='q0',
+            accept_states=set()
+        )
+
+    @staticmethod
+    def empty_string_language_NFA() -> Self:
+        return NFA(
+            states={'q0'},
+            alphabet=set(),
+            transition_function=dict(),
+            start_state='q0',
+            accept_states={'q0'},
+        )
+
+    @staticmethod
+    def union_empty_string(nfa: Self) -> Self:
+        new_start_state = f'(EMPTY, {uuid4().hex})'
+        new_transition_function = deepcopy(nfa.transition_function)
+        new_transition_function[new_start_state] = {
+            EMPTY_STRING_TRANSITION: {nfa.start_state}
+        }
+        return NFA(
+            states=nfa.states.union({new_start_state}),
+            alphabet=set(nfa.alphabet),
+            transition_function=new_transition_function,
+            start_state=new_start_state,
+            accept_states=nfa.accept_states.union({new_start_state})
+        )
+    # Special NFAs end
 
     # Quantifiers
     # Let L = language of NFA N
@@ -470,41 +511,6 @@ class NFA:
         result.accept_states.add(global_final)
         return result
     # Quantifiers end
-
-    @staticmethod
-    def empty_language_NFA() -> Self:
-        return NFA(
-            states={'q0'},
-            alphabet=set(),
-            transition_function=dict(),
-            start_state='q0',
-            accept_states=set()
-        )
-
-    @staticmethod
-    def empty_string_language_NFA() -> Self:
-        return NFA(
-            states={'q0'},
-            alphabet=set(),
-            transition_function=dict(),
-            start_state='q0',
-            accept_states={'q0'},
-        )
-
-    @staticmethod
-    def union_empty_string(nfa: Self) -> Self:
-        new_start_state = f'(EMPTY, {uuid4().hex})'
-        new_transition_function = deepcopy(nfa.transition_function)
-        new_transition_function[new_start_state] = {
-            EMPTY_STRING_TRANSITION: {nfa.start_state}
-        }
-        return NFA(
-            states=nfa.states.union({new_start_state}),
-            alphabet=set(nfa.alphabet),
-            transition_function=new_transition_function,
-            start_state=new_start_state,
-            accept_states=nfa.accept_states.union({new_start_state})
-        )
 
     @staticmethod
     def __pow__(nfa: Self, exponent) -> Self:
