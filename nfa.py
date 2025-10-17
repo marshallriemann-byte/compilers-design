@@ -495,21 +495,10 @@ class NFA:
     @staticmethod
     def bounded_NFA(nfa: Self, min_count, max_count) -> Self:
         # L{m,n}
-        result = NFA.power(nfa, min_count)
-        frontier = set(result.accept_states)
-        for i in range(max_count-min_count):
-            result = NFA.concatenate([result, nfa])
-            frontier.update(result.accept_states)
-        global_final = f'(FINAL_{uuid4().hex})'
-        for q in frontier:
-            result.transition_function.setdefault(
-                q, dict()
-            ).setdefault(
-                EMPTY_STRING_TRANSITION, set()
-            ).add(global_final)
-        result.states.add(global_final)
-        result.accept_states.add(global_final)
-        return result
+        return NFA.concatenate(
+            [NFA.power(nfa, min_count)] +
+            [NFA.union_empty_string(nfa) for _ in range(max_count-min_count)]
+        )
     # Quantifiers end
 
     @staticmethod
