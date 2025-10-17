@@ -1029,7 +1029,7 @@ class RegularExpression:
         else:
             self.ast: RegularExpressionAST = None
 
-        self.is_optimized = optimize_automaton
+        self.is_optimized = False
         if self.pattern:
             self.nfa: NFA = self.ast.to_NFA()
             if optimize_automaton:
