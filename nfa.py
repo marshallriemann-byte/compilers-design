@@ -487,10 +487,44 @@ class NFA:
     @staticmethod
     def at_most_NFA(nfa: Self, max_count) -> Self:
         # L{,n} = L{0,n}
-        return NFA.union([
-            NFA.power(nfa, i)
-            for i in range(max_count+1)
-        ])
+        start_state = f'{nfa.start_state}_0'
+        final_state = f'(ACCEPT, {uuid4().hex})'
+        states: States = {final_state}
+        alphabet = set(nfa.alphabet)
+        transition_function: TransitionFunction = dict()
+        for i in range(max_count):
+            for q, q_map in nfa.transition_function.items():
+                q_name = f'{q}_{i}'
+                states.add(q_name)
+                transition_function[q_name] = dict()
+                for c, targets in q_map.items():
+                    targets = {f'{t}_{i}' for t in targets}
+                    states.update(targets)
+                    transition_function[q_name][c] = targets
+            for q in nfa.accept_states:
+                q_name = f'{q}_{i}'
+                transition_function.setdefault(
+                    q_name, dict()
+                ).setdefault(
+                    EMPTY_STRING_TRANSITION, set()
+                ).add(final_state)
+                if i+1 < max_count:
+                    transition_function[q_name][
+                        EMPTY_STRING_TRANSITION
+                    ].add(f'{nfa.start_state}_{i+1}')
+        transition_function.setdefault(
+            start_state, dict()
+        ).setdefault(
+            EMPTY_STRING_TRANSITION, set()
+        ).add(final_state)
+        accept_states: States = {final_state}
+        return NFA(
+            states,
+            alphabet,
+            transition_function,
+            start_state,
+            accept_states
+        )
 
     @staticmethod
     def bounded_NFA(nfa: Self, min_count, max_count) -> Self:
