@@ -918,6 +918,8 @@ class RegularExpressionParser:
                                 result = QuantifierPowerOne()
                             case (0, n):
                                 result = QuantifierAtMost(max_count=n)
+                            case (m, n) if m == n:
+                                result = QuantifierExact(exponent=m)
                             case _:
                                 result = QuantifierBounded(
                                     min_count=low.value,
