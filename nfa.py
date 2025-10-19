@@ -529,10 +529,10 @@ class NFA:
     @staticmethod
     def bounded_NFA(nfa: Self, min_count, max_count) -> Self:
         # L{m,n}
-        return NFA.concatenate(
-            [NFA.power(nfa, min_count)] +
-            [NFA.union_empty_string(nfa) for _ in range(max_count-min_count)]
-        )
+        return NFA.concatenate([
+            NFA.power(nfa, min_count),
+            NFA.at_most_NFA(nfa, max_count-min_count)
+        ])
     # Quantifiers end
 
     @staticmethod
