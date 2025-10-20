@@ -641,10 +641,14 @@ QUANTIFIERS_CHARS = {
 }
 
 
+@dataclass(init=True, repr=True, frozen=True)
 class ParseResult:
-    def __init__(self, parsed_expression: RegularExpressionAST, error: str):
-        self.parsed_expression: RegularExpressionAST = parsed_expression
-        self.error: str = error
+    parsed_expression: RegularExpressionAST
+    error: str
+
+    def __iter__(self):
+        yield self.parsed_expression
+        yield self.error
 
 
 class RegularExpressionParser:
@@ -741,9 +745,7 @@ class RegularExpressionParser:
 
     def parse(self) -> RegularExpressionAST:
         if self.current:
-            result = self.parse_expression()
-            parsed_expression = result.parsed_expression
-            error = result.error
+            parsed_expression, error = self.parse_expression()
             if error:
                 # Syntax error
                 raise ValueError(error)
@@ -784,15 +786,11 @@ class RegularExpressionParser:
 
     # Expression => Concatenation ( '|' Concatenation )*
     def parse_expression(self) -> ParseResult:
-        initial = self.parse_concatenation()
-        parsed_expression = initial.parsed_expression
-        error = initial.error
+        parsed_expression, error = self.parse_concatenation()
         if parsed_expression:
             alternatives: list[RegularExpressionAST] = [parsed_expression]
             while not error and self.consume(TokenType.UNION_BAR):
-                right_term = self.parse_concatenation()
-                parsed_expression = right_term.parsed_expression
-                error = right_term.error
+                parsed_expression, error = self.parse_concatenation()
                 if error:
                     parsed_expression = None
                 elif parsed_expression:
@@ -820,15 +818,11 @@ class RegularExpressionParser:
 
     # Concatenation => Quantified Quantified*
     def parse_concatenation(self) -> ParseResult:
-        initial = self.parse_quantified()
-        parsed_expression = initial.parsed_expression
-        error = initial.error
+        parsed_expression, error = self.parse_quantified()
         if parsed_expression:
             sequence: list[RegularExpressionAST] = [parsed_expression]
             while not error:
-                right_term = self.parse_quantified()
-                parsed_expression = right_term.parsed_expression
-                error = right_term.error
+                parsed_expression, error = self.parse_quantified()
                 if error:
                     parsed_expression = None
                 elif parsed_expression:
@@ -857,16 +851,12 @@ class RegularExpressionParser:
 
     # Quantified => Primary Quantifier*
     def parse_quantified(self) -> ParseResult:
-        primary = self.parse_primary()
-        parsed_expression = primary.parsed_expression
-        error = primary.error
+        parsed_expression, error = self.parse_primary()
         if parsed_expression:
             while quantifier := self.consume_quantifier():
                 parsed_expression = (
                     quantifier.apply_on_expression(parsed_expression)
                 )
-        else:
-            parsed_expression = None
         return ParseResult(parsed_expression, error)
 
     # Quantifier => '?' | '*' | '+' | BoundedQuantifier
@@ -990,9 +980,7 @@ class RegularExpressionParser:
 
     # Group => ( '(' Expression ')' )
     def parse_group(self) -> ParseResult:
-        expr = self.parse_expression()
-        parsed_expression = expr.parsed_expression
-        error = expr.error
+        parsed_expression, error = self.parse_expression()
         if error:
             parsed_expression = None
         elif parsed_expression:
