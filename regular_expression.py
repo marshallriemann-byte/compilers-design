@@ -107,7 +107,7 @@ class UnionAST(RegularExpressionAST):
     @override
     def __repr__(self) -> str:
         value = ', '.join([repr(re) for re in self.alternatives])
-        return f'UnionExpression({value})'
+        return f'Union({value})'
 
     @override
     def __str__(self) -> str:
@@ -334,7 +334,7 @@ class QuantifierKleenePlus(Quantifier):
 
 
 # Exact {m}
-@dataclass(init=True, repr=True, eq=True, frozen=True)
+@dataclass(init=True, eq=True, frozen=True)
 class QuantifierExact(Quantifier):
     exponent: int
 
@@ -344,10 +344,20 @@ class QuantifierExact(Quantifier):
 
     @override
     def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
-        return QuantifiedAST(
-            inner_expr=expr,
-            quantifier=deepcopy(self)
-        )
+        match expr:
+            case QuantifiedAST(
+                inner_expr=expr,
+                quantifier=QuantifierExact(exponent=m)
+            ):
+                return QuantifiedAST(
+                    inner_expr=expr,
+                    quantifier=QuantifierExact(exponent=self.exponent*m)
+                )
+            case _:
+                return QuantifiedAST(
+                    inner_expr=expr,
+                    quantifier=deepcopy(self)
+                )
 
     @override
     def __repr__(self) -> str:
@@ -355,11 +365,11 @@ class QuantifierExact(Quantifier):
 
     @override
     def __str__(self) -> str:
-        return f'{{{self.exponent}}}'
+        return '{%s}' % self.exponent
 
 
 # At least {m,}
-@dataclass(init=True, repr=True, eq=True, frozen=True)
+@dataclass(init=True, eq=True, frozen=True)
 class QuantifierAtLeast(Quantifier):
     min_count: int
 
@@ -380,11 +390,11 @@ class QuantifierAtLeast(Quantifier):
 
     @override
     def __str__(self) -> str:
-        return f'{{{self.min_count},}}'
+        return '{%s,}' % self.min_count
 
 
 # At most {,m}
-@dataclass(init=True, repr=True, eq=True, frozen=True)
+@dataclass(init=True, eq=True, frozen=True)
 class QuantifierAtMost(Quantifier):
     max_count: int
 
@@ -405,11 +415,11 @@ class QuantifierAtMost(Quantifier):
 
     @override
     def __str__(self) -> str:
-        return f'{{,{self.max_count}}}'
+        return '{,%s}' % self.max_count
 
 
 # Bounded {m,n}
-@dataclass(init=True, repr=True, eq=True, frozen=True)
+@dataclass(init=True, eq=True, frozen=True)
 class QuantifierBounded(Quantifier):
     min_count: int
     max_count: int
@@ -433,7 +443,7 @@ class QuantifierBounded(Quantifier):
 
     @override
     def __str__(self) -> str:
-        return f'{{{self.min_count},{self.max_count}}}'
+        return '{%s,%s}' % (self.min_count, self.max_count)
 # Quantifier types end
 
 
