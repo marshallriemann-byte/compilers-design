@@ -345,14 +345,48 @@ class QuantifierExact(Quantifier):
     @override
     def apply_on_expression(self, expr: RegularExpressionAST) -> Self:
         match expr:
+            case EmptyStringAST():
+                # ε{m} = ε
+                return EmptyStringAST()
+            case EmptyLanguageAST():
+                # Φ{m} = Φ
+                return EmptyLanguageAST()
             case QuantifiedAST(
-                inner_expr=expr,
-                quantifier=QuantifierExact(exponent=m)
+                inner_expr=inner,
+                quantifier=op
             ):
-                return QuantifiedAST(
-                    inner_expr=expr,
-                    quantifier=QuantifierExact(exponent=self.exponent*m)
-                )
+                match op:
+                    case QuantifierOptional():
+                        # (R?){m} = (ε|R)(ε|R)...(ε|R) m times = R{,m}
+                        return QuantifiedAST(
+                            inner_expr=inner,
+                            quantifier=QuantifierAtMost(
+                                max_count=self.exponent
+                            )
+                        )
+                    case QuantifierKleeneStar() | QuantifierKleenePlus():
+                        # (R+){m} = R+
+                        # (R*){m} = R*
+                        return expr
+                    case QuantifierExact(exponent=m):
+                        return QuantifiedAST(
+                            inner_expr=inner,
+                            quantifier=QuantifierExact(
+                                exponent=self.exponent*m
+                            )
+                        )
+                    case QuantifierAtMost(max_count=n):
+                        return QuantifiedAST(
+                            inner_expr=inner,
+                            quantifier=QuantifierAtMost(
+                                max_count=n*self.exponent
+                            )
+                        )
+                    case _:
+                        return QuantifiedAST(
+                            inner_expr=expr,
+                            quantifier=deepcopy(self)
+                        )
             case _:
                 return QuantifiedAST(
                     inner_expr=expr,
