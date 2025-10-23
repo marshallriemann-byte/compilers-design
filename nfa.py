@@ -565,3 +565,29 @@ class NFA:
                 raise TypeError(
                     "Exponent must be an int or a tuple (m, n) with m < n"
                 )
+
+    @staticmethod
+    def are_equivalent(nfa1: Self, nfa2: Self) -> bool:
+        if nfa1.alphabet != nfa2.alphabet:
+            return False
+        queue = deque([(
+            frozenset(nfa1.epsilon_closure({nfa1.start_state})),
+            frozenset(nfa2.epsilon_closure({nfa2.start_state}))
+        )])
+        visited = set()
+        while queue:
+            s1, s2 = queue.popleft()
+            if (s1, s2) in visited:
+                continue
+            visited.add((s1, s2))
+            if (
+                bool(s1.intersection(nfa1.accept_states)) ^
+                bool(s2.intersection(nfa2.accept_states))
+            ):
+                return False
+            for c in nfa1.alphabet:
+                queue.append((
+                    frozenset(nfa1.epsilon_closure({nfa1.start_state})),
+                    frozenset(nfa2.epsilon_closure({nfa2.start_state})),
+                ))
+        return True
