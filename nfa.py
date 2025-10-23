@@ -535,31 +535,30 @@ class NFA:
         ])
     # Quantifiers end
 
-    @staticmethod
-    def __pow__(nfa: Self, exponent) -> Self:
-        # L = language of NFA (nfa)
+    def __pow__(self, exponent) -> Self:
+        # L = language of NFA (self)
         match exponent:
             case int(m):
                 # L^m
-                return NFA.power(nfa, m)
+                return NFA.power(self, m)
             case (int(m), int(n)) if m == n:
                 # L^m
-                return NFA.power(nfa, m)
+                return NFA.power(self, m)
             case (0, 0):
                 # L{0, 0} = (L^0) = {empty string}
                 return NFA.empty_string_language_NFA()
             case (0, None):
                 # L{0,} = L*
-                return NFA.kleene_star(nfa)
+                return NFA.kleene_star(self)
             case (0, int(n)):
                 # L{,n} = L{0,n}
-                return NFA.at_most_NFA(nfa)
+                return NFA.at_most_NFA(self)
             case (1, None):
                 # L+ = L L*
-                return NFA.kleene_plus(nfa)
+                return NFA.kleene_plus(self)
             case (int(m), None):
                 # L{m,} = (L^m) L*
-                return NFA.at_least_NFA(nfa)
+                return NFA.at_least_NFA(self)
             case (int(m), int(n)) if m < n:
                 return NFA.bounded_NFA(m, n)
             case _:
