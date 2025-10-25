@@ -335,9 +335,19 @@ class NFA:
         return star_nfa
 
     @staticmethod
-    def concatenate(automata: Sequence[Self]) -> Self:
-        def rename_state(nfa_index, state_name):
-            return f'(NFA{nfa_index}, {state_name})'
+    def concatenate(
+        automata: Sequence[Self],
+        names_map: dict[str, str] = None
+    ) -> Self:
+        if names_map:
+            def rename_state(nfa_index, state_name):
+                value = f'{state_name}_{nfa_index}'
+                names_map[state_name] = value
+                return value
+        else:
+            def rename_state(nfa_index, state_name):
+                return f'{state_name}_{nfa_index}'
+
         states: States = set()
         alphabet: Alphabet = set()
         transition_function: TransitionFunction = dict()
@@ -378,9 +388,19 @@ class NFA:
         )
 
     @staticmethod
-    def union(automata: Sequence[Self]) -> Self:
-        def rename_state(nfa_index, state_name):
-            return f'(NFA{nfa_index}, {state_name})'
+    def union(
+        automata: Sequence[Self],
+        names_map: dict[str, str] = None
+    ) -> Self:
+        if names_map:
+            def rename_state(nfa_index, state_name):
+                value = f'{state_name}_{nfa_index}'
+                names_map[state_name] = value
+                return value
+        else:
+            def rename_state(nfa_index, state_name):
+                return f'{state_name}_{nfa_index}'
+
         states: States = set()
         alphabet: Alphabet = set()
         transition_function: TransitionFunction = dict()
