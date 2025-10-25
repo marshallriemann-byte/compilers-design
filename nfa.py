@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from uuid import uuid4
 from typing import Self
 from copy import deepcopy
+from dataclasses import dataclass
 
 
 type Symbol = str
@@ -14,6 +15,23 @@ type State = str
 type States = set[State]
 type StateMap = dict[Symbol, States]
 type TransitionFunction = dict[State, StateMap]
+
+
+@dataclass(init=True, repr=True)
+class GroupInfo:
+    start_state: State
+    states: States
+    accept_states: States
+    capture: str | None
+
+    def __iter__(self):
+        yield self.start_state
+        yield self.states
+        yield self.accept_states
+        yield self.capture
+
+
+type GroupCaptures = dict[int, GroupInfo]
 
 
 EMPTY_STRING_TRANSITION = ''
@@ -75,6 +93,14 @@ class NFA:
         else:
             self.automaton_type = AutomatonType.NONDETERMINISTIC
         self.is_minimized = False
+        self.groups: GroupCaptures = {
+            0: GroupInfo(
+                start_state=str(self.start_state),
+                states=set(self.states),
+                accept_states=set(self.accept_states),
+                capture=''
+            )
+        }
 
     def __repr__(self):
         if self.automaton_type == AutomatonType.DETERMINISTIC:
@@ -118,12 +144,31 @@ class NFA:
         nfa_states = self.epsilon_closure({self.start_state})
         for c in input:
             nfa_states = self.move_set(nfa_states, c)
+            self.groups = {
+                id: info
+                for id, info in self.groups.items()
+                if info.states.intersection(nfa_states)
+            }
+            for q in nfa_states:
+                for _, group_info in self.groups.items():
+                    start_state, accept_states, states, capture = group_info
+                    if q == start_state:
+                        group_info.capture = ''
+            for _, group_info in self.groups.items():
+                group_info.capture += c
             if not nfa_states:
-                return ComputationResult.REJECT
+                break
             nfa_states = self.epsilon_closure(nfa_states)
-        if nfa_states.intersection(self.accept_states):
-            return ComputationResult.ACCEPT
-        return ComputationResult.REJECT
+        self.groups = {
+            id: info
+            for id, info in self.groups.items()
+            if info.states.intersection(info.accept_states)
+        }
+        return (
+            ComputationResult.ACCEPT
+            if nfa_states.intersection(self.accept_states)
+            else ComputationResult.REJECT
+        )
 
     def enumerate_language(self):
         queue = deque([''])
@@ -303,6 +348,15 @@ class NFA:
         }
         self.start_state = names[self.start_state]
         self.accept_states = {names[q] for q in self.accept_states}
+        self.groups = {
+            id: GroupInfo(
+                start_state=names[info.start_state],
+                states={names[q] for q in info.states},
+                accept_states={names[q] for q in info.accept_states},
+                capture=info.capture
+            )
+            for id, info in self.groups.items()
+        }
         return self
 
     # Operators overloading
